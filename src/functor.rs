@@ -6,10 +6,10 @@
 /// f a -> f b
 /// <Self as Functor<A>>::Functor<B>
 /// f a -> (a -> b) -> f b
-trait Functor<A> {
+pub trait Functor<A> {
     type Functor<T>;
 
-    fn __map<B, Func>(self, f: Func) -> <Self as Functor<A>>::Functor<B>
+    fn fmap<B, Func>(self, f: Func) -> <Self as Functor<A>>::Functor<B>
     where
         Func: FnOnce(A) -> B;
 }
@@ -17,7 +17,7 @@ trait Functor<A> {
 impl<A> Functor<A> for Option<A> {
     type Functor<T> = Option<T>;
 
-    fn __map<B, Func>(self, f: Func) -> Self::Functor<B>
+    fn fmap<B, Func>(self, f: Func) -> Self::Functor<B>
     where
         Func: FnOnce(A) -> B,
     {
@@ -30,7 +30,7 @@ mod tests {
     #[test]
     fn add_one() {
         let closure = |x| x + 1;
-        assert_eq!(super::Functor::__map(Some(1), closure), Some(2))
+        assert_eq!(super::Functor::fmap(Some(1), closure), Some(2))
     }
 
 }
