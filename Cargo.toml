@@ -1,0 +1,10 @@
+[package]
+name = "fp-rs"
+description = "Monads in Rust"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.66"
+readme = "README.md"
+license = "Apache-2.0"
+
+[dependencies]
