@@ -1,4 +1,5 @@
 use crate::{
+    fn2,
     function::{AnyFunction, CFn},
     functor::Functor,
 };
@@ -58,6 +59,46 @@ where
         + Functor<A, Functor<<F as Apply<A>>::Fnn<A, B>> = <F as Functor<A>>::Functor<CFn<B, C>>>,
 {
     fb.apply(fa.__map(func))
+}
+
+/// Combine two `Applyable` actions, keeping only the result of the first.
+/// ```
+/// use fp_rs::apply::apply_first;
+///
+/// assert_eq!(apply_first(Some(1), Some(2)), Some(1));
+/// assert_eq!(apply_first(None, Some(1)), None);
+/// assert_eq!(apply_first(Some(1), None), None);
+/// assert_eq!(apply_first(Option::<i32>::None, None), None);
+/// ```
+pub fn apply_first<A, B, F>(fa: F, fb: F) -> <F as Apply<A>>::Apply<A>
+where
+    A: Copy + 'static,
+    F: Apply<A, Apply<A> = F>
+        + Apply<A, Apply<B> = F>
+        + Functor<A, Functor<A> = F>
+        + Functor<A, Functor<<F as Apply<A>>::Fnn<A, B>> = <F as Functor<A>>::Functor<CFn<B, A>>>,
+{
+    lift2(fn2!(|x| move |_y| x), fa, fb)
+}
+
+/// Combine `two Applyable` actions, keeping only the result of the second.
+/// ```
+/// use fp_rs::apply::apply_second;
+///
+/// assert_eq!(apply_second(Some(1), Some(2)), Some(2));
+/// assert_eq!(apply_second(None, Some(1)), None);
+/// assert_eq!(apply_second(Some(1), None), None);
+/// assert_eq!(apply_second(Option::<i32>::None, None), None);
+/// ```
+pub fn apply_second<A, B, F>(fa: F, fb: F) -> <F as Apply<A>>::Apply<B>
+where
+    A: Copy + 'static,
+    F: Apply<A, Apply<A> = F>
+        + Apply<A, Apply<B> = F>
+        + Functor<A, Functor<A> = F>
+        + Functor<A, Functor<<F as Apply<A>>::Fnn<A, A>> = <F as Functor<A>>::Functor<CFn<A, A>>>,
+{
+    lift2(fn2!(|_x| move |y| y), fa, fb)
 }
 
 #[cfg(test)]
