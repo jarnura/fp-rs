@@ -25,18 +25,18 @@ impl<A> Apply<A> for Option<A> {
     where
         Self: Sized,
     {
-        self.and_then(|v| i.__map(|f| f.run(v)))
+        self.and_then(|v| i.__map(|f| (*f)(v)))
     }
 }
 
+#[cfg(test)]
 mod tests {
+    use super::*;
+    use crate::{fn2, functor::Functor};
 
     #[test]
     fn apply_on_option() {
-        use super::Apply;
-        use crate::{closure2, functor::Functor};
-
-        let closure = closure2!(|x: i32| move |y: i32| x + y);
+        let closure = fn2!(|x: i32| move |y: i32| x + y);
         let some_closure = Some(1).__map(closure);
         let none_closure = None.__map(closure);
         assert_eq!(Some(2).apply(some_closure), Some(3));

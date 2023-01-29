@@ -19,12 +19,12 @@ impl<A> Applicative<A> for Option<A> {
     }
 }
 
+#[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn check_some() {
-        use super::Applicative;
-
         assert_eq!(Option::pure(1), Some(1))
     }
 }

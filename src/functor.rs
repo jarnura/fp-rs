@@ -24,12 +24,12 @@ impl<A> Functor<A> for Option<A> {
     }
 }
 
+#[cfg(test)]
 mod tests {
+    use super::*;
 
     #[test]
     fn add_one() {
-        use super::Functor;
-
         let closure = |x| x + 1;
         assert_eq!(Some(1).__map(closure), Some(2))
     }
