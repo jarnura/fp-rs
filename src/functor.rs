@@ -3,7 +3,7 @@
 /// Functor trait supports an operation called __map.
 pub trait Functor<A> {
     /// The Associative type which acts a `* -> *`.
-    ///  `*(Functor)` -> `*(Any type)`   
+    ///  `*(Functor)` -> `*(T)`   
     type Functor<T>;
 
     /// Assume F is a `Functor`, then __map can be used to apply a function `A -> B` on
