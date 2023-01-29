@@ -1,6 +1,6 @@
 use crate::{
+    function::{AnyFunction, CFn},
     functor::Functor,
-    utils::{AnyFunction, CFn},
 };
 
 pub trait Apply<A>: Functor<A> {
