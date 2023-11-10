@@ -6,7 +6,7 @@ pub fn add_one(c: &mut Criterion) {
     let input = Some(1);
 
     group.bench_with_input(BenchmarkId::new("functor_map", 1), &input, |b, &s| {
-        b.iter(|| Functor::fmap(s, |x| x + 1))
+        b.iter(|| Functor::__map(s, |x| x + 1))
     });
 
     group.bench_with_input(BenchmarkId::new("option_map", 1), &input, |b, &s| {

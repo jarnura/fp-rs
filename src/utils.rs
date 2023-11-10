@@ -15,7 +15,18 @@ macro_rules! fn1 {
 #[macro_export]
 macro_rules! fn2 {
     ($closure:expr) => {
-        |x| $crate::function::CFn::new(move |y| $closure(x)(y))
+        move |x| $crate::function::CFn::new(move |y| $closure(x)(y))
+    };
+}
+
+#[macro_export]
+macro_rules! fn3 {
+    ($closure:expr) => {
+        move |x| {
+            $crate::function::CFn::new(move |y| {
+                $crate::function::CFn::new(move |z| $closure(x)(y)(z))
+            })
+        }
     };
 }
 

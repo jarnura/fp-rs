@@ -28,7 +28,26 @@ pub trait AnyFunction<A, B> {
 }
 
 impl<A, B> AnyFunction<A, B> for CFn<A, B> {
-    type Function = BFn<A, B>;
+    type Function = CFn<A, B>;
+}
+
+impl<A, B> FnOnce<(A,)> for CFn<A, B> {
+    type Output = B;
+    extern "rust-call" fn call_once(self, b: (A,)) -> Self::Output {
+        self.0.call_once(b)
+    }
+}
+
+impl<A, B> Fn<(A,)> for CFn<A, B> {
+    extern "rust-call" fn call(&self, b: (A,)) -> Self::Output {
+        self.0.call(b)
+    }
+}
+
+impl<A, B> FnMut<(A,)> for CFn<A, B> {
+    extern "rust-call" fn call_mut(&mut self, b: (A,)) -> Self::Output {
+        self.0.call_mut(b)
+    }
 }
 
 fn compose<A: 'static, B: 'static, C: 'static>(f: BFn<A, B>, g: BFn<B, C>) -> BFn<A, C> {

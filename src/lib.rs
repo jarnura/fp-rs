@@ -1,3 +1,6 @@
+#![feature(unboxed_closures)]
+#![feature(fn_traits)]
+
 pub mod applicative;
 pub mod apply;
 pub mod function;

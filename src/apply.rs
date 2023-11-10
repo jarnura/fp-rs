@@ -18,9 +18,10 @@ pub trait Apply<A>: Functor<A> {
 
     /// Assume F is a `Apply`, then apply can be used to apply a wrapped function `Apply<(A -> B)>` on
     /// that `Apply<A>` or `F A`,  which produces `Apply<B>` or `F B`.
+    #[allow(clippy::type_complexity)]
     fn apply<B>(
         self,
-        i: <Self as Functor<A>>::Functor<Self::Fnn<A, B>>,
+        i: <Self as Functor<A>>::Functor<<Self::Fnn<A, B> as AnyFunction<A, B>>::Function>,
     ) -> <Self as Apply<A>>::Apply<B>
     where
         Self: Sized;
@@ -31,7 +32,7 @@ impl<A> Apply<A> for Option<A> {
 
     type Fnn<T, U> = CFn<T, U>;
 
-    fn apply<B>(self, i: Option<Self::Fnn<A, B>>) -> Option<B>
+    fn apply<B>(self, i: Option<<Self::Fnn<A, B> as AnyFunction<A, B>>::Function>) -> Option<B>
     where
         Self: Sized,
     {
@@ -51,14 +52,40 @@ impl<A> Apply<A> for Option<A> {
 /// assert_eq!(lift2(closure, None, Some(2)), None)
 ///```
 ///
-pub fn lift2<A, B, C, F, Fnn>(func: Fnn, fa: F, fb: F) -> F
+pub fn lift2<A, B, C, A2B2C, FB2C, FA, FB, FC>(func: A2B2C, fa: FA, fb: FB) -> FC
 where
-    Fnn: Fn(A) -> CFn<B, C>,
-    F: Apply<A, Apply<B> = F>
-        + Functor<A, Functor<A> = F>
-        + Functor<A, Functor<<F as Apply<A>>::Fnn<A, B>> = <F as Functor<A>>::Functor<CFn<B, C>>>,
+    A2B2C: Fn(A) -> CFn<B, C>,
+    FA: Functor<A, Functor<CFn<B, C>> = FB2C>,
+    FB: Apply<
+        B,
+        Functor<<<FB as Apply<B>>::Fnn<B, C> as AnyFunction<B, C>>::Function> = FB2C,
+        Apply<C> = FC,
+    >,
 {
     fb.apply(fa.__map(func))
+}
+
+pub fn lift3<A, B, C, D, A2B2C2D, FB2C2D, FC2D, FA, FB, FC, FD>(
+    func: A2B2C2D,
+    fa: FA,
+    fb: FB,
+    fc: FC,
+) -> FD
+where
+    A2B2C2D: Fn(A) -> CFn<B, CFn<C, D>>,
+    FA: Functor<A, Functor<CFn<B, CFn<C, D>>> = FB2C2D>,
+    FB: Apply<
+        B,
+        Functor< <<FB as Apply<B>>::Fnn<B, CFn<C,D>> as AnyFunction<B, CFn<C,D>>>::Function> = FB2C2D,
+        Apply<CFn<C,D>> = FC2D,
+        >,
+    FC: Apply<
+        C,
+        Functor< <<FC as Apply<C>>::Fnn<C, D> as AnyFunction<C, D>>::Function> = FC2D,
+        Apply<D> = FD,
+    >,
+{
+    fc.apply(fb.apply(fa.__map(func)))
 }
 
 /// Combine two `Applyable` actions, keeping only the result of the first.
@@ -66,17 +93,15 @@ where
 /// use fp_rs::apply::apply_first;
 ///
 /// assert_eq!(apply_first(Some(1), Some(2)), Some(1));
-/// assert_eq!(apply_first(None, Some(1)), None);
-/// assert_eq!(apply_first(Some(1), None), None);
-/// assert_eq!(apply_first(Option::<i32>::None, None), None);
+/// assert_eq!(apply_first(None::<i32>, Some(1)), None);
+/// assert_eq!(apply_first(Some(1), None::<i32>), None);
+/// assert_eq!(apply_first(Option::<i32>::None, None::<i32>), None);
 /// ```
-pub fn apply_first<A, B, F>(fa: F, fb: F) -> <F as Apply<A>>::Apply<A>
+pub fn apply_first<A, B, FA, FB, FB2A>(fa: FA, fb: FB) -> <FB as Apply<B>>::Apply<A>
 where
     A: Copy + 'static,
-    F: Apply<A, Apply<A> = F>
-        + Apply<A, Apply<B> = F>
-        + Functor<A, Functor<A> = F>
-        + Functor<A, Functor<<F as Apply<A>>::Fnn<A, B>> = <F as Functor<A>>::Functor<CFn<B, A>>>,
+    FA: Functor<A, Functor<CFn<B, A>> = FB2A>,
+    FB: Apply<B, Functor<<<FB as Apply<B>>::Fnn<B, A> as AnyFunction<B, A>>::Function> = FB2A>,
 {
     lift2(fn2!(|x| move |_y| x), fa, fb)
 }
@@ -86,17 +111,15 @@ where
 /// use fp_rs::apply::apply_second;
 ///
 /// assert_eq!(apply_second(Some(1), Some(2)), Some(2));
-/// assert_eq!(apply_second(None, Some(1)), None);
-/// assert_eq!(apply_second(Some(1), None), None);
-/// assert_eq!(apply_second(Option::<i32>::None, None), None);
+/// assert_eq!(apply_second(None::<&str>, Some(1)), None);
+/// assert_eq!(apply_second(Some(1), None::<i8>), None);
+/// assert_eq!(apply_second(Option::<i32>::None, None::<i8>), None);
 /// ```
-pub fn apply_second<A, B, F>(fa: F, fb: F) -> <F as Apply<A>>::Apply<B>
+pub fn apply_second<A, B, FA, FB, FB2B>(fa: FA, fb: FB) -> <FB as Apply<B>>::Apply<B>
 where
     A: Copy + 'static,
-    F: Apply<A, Apply<A> = F>
-        + Apply<A, Apply<B> = F>
-        + Functor<A, Functor<A> = F>
-        + Functor<A, Functor<<F as Apply<A>>::Fnn<A, A>> = <F as Functor<A>>::Functor<CFn<A, A>>>,
+    FA: Functor<A, Functor<CFn<B, B>> = FB2B>,
+    FB: Apply<B, Functor<<<FB as Apply<B>>::Fnn<B, B> as AnyFunction<B, B>>::Function> = FB2B>,
 {
     lift2(fn2!(|_x| move |y| y), fa, fb)
 }
@@ -104,14 +127,22 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{fn2, functor::Functor};
+    use crate::{fn2, fn3, functor::Functor};
 
     #[test]
     fn apply_on_option() {
-        let closure = fn2!(|x: i32| move |y: i32| x + y);
+        let closure = fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
         let some_closure = Some(1).__map(closure);
         let none_closure = None.__map(closure);
-        assert_eq!(Some(2).apply(some_closure), Some(3));
-        assert_eq!(Some(2).apply(none_closure), None)
+        assert_eq!(Some(2).apply(some_closure), Some("12".to_string()));
+        assert_eq!(Some(2).apply(none_closure), None);
+
+        let closure = fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
+        assert_eq!(lift2(closure, Some(1), Some(2)), Some("12".to_string()));
+        assert_eq!(lift2(closure, None, Some(2)), None);
+
+        let closure = fn3!(|x: i32| move |y: i8| move |z: i32| x + y as i32 + z);
+
+        assert_eq!(lift3(closure, Some(1), Some(2), Some(3)), Some(6));
     }
 }

@@ -16,7 +16,7 @@ pub trait Functor<A> {
 impl<A> Functor<A> for Option<A> {
     type Functor<T> = Option<T>;
 
-    fn __map<B, Func>(self, f: Func) -> Self::Functor<B>
+    fn __map<B, Func>(self, f: Func) -> <Self as Functor<A>>::Functor<B>
     where
         Func: FnOnce(A) -> B,
     {
