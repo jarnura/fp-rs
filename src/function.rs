@@ -94,9 +94,8 @@ where
 
 impl<M, A, B> std::ops::BitOr<BindableFn<M, A, B>> for BindType<M, A, A>
 where
-    M: Bind<B>
-        + Bind<A, Bind<A> = M>
-        + Bind<A, Bind<B> = M, BindFn<A, B> = CFn<A, <M as Bind<A>>::Bind<B>>>,
+    M: Bind<B> + Bind<A, Bind<A> = M>,
+    M: Bind<A, Bind<B> = M, BindFn<A, <M as Bind<A>>::Bind<B>> = CFn<A, M>>,
 {
     type Output = BindType<M, A, B>;
 

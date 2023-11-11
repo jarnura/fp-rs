@@ -9,7 +9,7 @@ pub trait Bind<A>: Apply<A> {
 
     type BindFn<T, U>;
 
-    fn bind<B>(self, m: Self::BindFn<A, B>) -> <Self as Bind<A>>::Bind<B>
+    fn bind<B>(self, m: Self::BindFn<A, Self::Bind<B>>) -> <Self as Bind<A>>::Bind<B>
     where
         Self: Bind<A>;
 }
@@ -17,11 +17,33 @@ pub trait Bind<A>: Apply<A> {
 impl<A> Bind<A> for Option<A> {
     type Bind<T> = Option<T>;
 
-    type BindFn<T, U> = CFn<T, Self::Bind<U>>;
+    type BindFn<T, U> = CFn<T, U>;
 
-    fn bind<B>(self, m: Self::BindFn<A, B>) -> <Self as Bind<A>>::Bind<B> {
+    fn bind<B>(self, m: Self::BindFn<A, Self::Bind<B>>) -> <Self as Bind<A>>::Bind<B> {
         self.and_then(|a| (*m)(a))
     }
+}
+
+pub fn bind<A, B, MA, MB, A2MB>(f: A2MB, ma: MA) -> MB
+where
+    A2MB: Fn(A) -> MB + 'static,
+    MA: Bind<A, Bind<B> = MB, BindFn<A, <MA as Bind<A>>::Bind<B>> = CFn<A, MB>>,
+{
+    let c = CFn::new(f);
+    ma.bind::<B>(c)
+}
+
+pub fn join<A, M, MM>(mma: MM) -> M
+where
+    M: Bind<A, Bind<A> = M> + 'static,
+    MM: Bind<
+        <M as Bind<A>>::Bind<A>,
+        Bind<A> = M,
+        BindFn<<M as Bind<A>>::Bind<A>, <M as Bind<A>>::Bind<A>> = CFn<M, M>,
+    >,
+{
+    let i = CFn::new(|x: <M as Bind<A>>::Bind<A>| x);
+    bind::<_, A, _, _, _>(i, mma)
 }
 
 #[cfg(test)]
@@ -45,7 +67,13 @@ mod tests {
         let add_three = fn1!(|x: i32| x + 3);
         let composed = add_one << add_two << add_three;
         let result = Some(1).bind(composed);
-        assert_eq!(result, Some(7))
+        assert_eq!(result, Some(7));
+
+        let result = join(Some(Some(1)));
+        assert_eq!(result, Some(1));
+
+        let result = join(Some(None::<i32>));
+        assert_eq!(result, None);
     }
 
     #[test]

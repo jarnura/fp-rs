@@ -7,3 +7,4 @@ pub mod function;
 pub mod functor;
 pub mod monad;
 pub mod utils;
+pub mod profunctor;
