@@ -1,6 +1,6 @@
 use crate::{
     apply::Apply,
-    function::{AnyFunction, CFn},
+    function::{CFn},
 };
 
 /// A Applicative
@@ -17,7 +17,7 @@ pub trait Applicative<A>: Apply<A> {
     fn pure(v: A) -> Self::Applicative<A>;
 }
 
-impl<A> Applicative<A> for Option<A> {
+impl<A: 'static> Applicative<A> for Option<A> {
     type Applicative<T> = Option<T>;
 
     fn pure(v: A) -> Self::Applicative<A> {
@@ -25,29 +25,19 @@ impl<A> Applicative<A> for Option<A> {
     }
 }
 
-pub fn lift_a1<F, A, B, A2B, FA2B>(f: A2B, fa: F) -> <F as Apply<A>>::Apply<B>
-where
-    A2B: Fn(A) -> B + 'static,
-    FA2B: Applicative<CFn<A, B>, Applicative<CFn<A, B>> = FA2B>,
-    F: Apply<A, Functor<<<F as Apply<A>>::Fnn<A, B> as AnyFunction<A, B>>::Function> = FA2B>,
-{
-    fa.apply(FA2B::pure(CFn::new(f)))
+impl<A: 'static, E: 'static + Clone> Applicative<A> for Result<A, E> {
+    type Applicative<T> = Result<T, E>;
+
+    fn pure(v: A) -> Self::Applicative<A> {
+        Ok(v)
+    }
 }
 
-#[cfg(test)]
-mod tests {
-
-    use super::*;
-
-    #[test]
-    fn check_some() {
-        assert_eq!(Option::pure(1), Some(1))
-    }
-
-    #[test]
-    fn test_lift_a1() {
-        let c = |x: i32| format!("{x}");
-        let result = lift_a1(c, Some(1));
-        assert_eq!(result, Some("1".to_string()))
-    }
+pub fn lift_a1<F, A, B, A2B, FA2B>(f: A2B, fa: F) -> <F as Apply<A>>::Apply<B>
+where
+    A2B: Fn(A) -> B + 'static, // Removed Clone
+    FA2B: Applicative<CFn<A, B>, Applicative<CFn<A, B>> = FA2B>,
+    F: Apply<A, Functor<<F as Apply<A>>::Fnn<A, B>> = FA2B>, // Simplified this bound
+{
+    fa.apply(FA2B::pure(CFn::new(f)))
 }

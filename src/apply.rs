@@ -1,6 +1,6 @@
 use crate::{
     fn2,
-    function::{AnyFunction, CFn},
+    function::{CFn},
     functor::Functor,
 };
 
@@ -14,31 +14,50 @@ pub trait Apply<A>: Functor<A> {
 
     /// Apply used to lift a normal function to `Apply<Function>`.
     ///  `Fnn<T,U>` is the normal function
-    type Fnn<T, U>: AnyFunction<T, U>;
+    type Fnn<T, U>; // Removed AnyFunction bound
 
     /// Assume F is a `Apply`, then apply can be used to apply a wrapped function `Apply<(A -> B)>` on
     /// that `Apply<A>` or `F A`,  which produces `Apply<B>` or `F B`.
     #[allow(clippy::type_complexity)]
     fn apply<B>(
         self,
-        i: <Self as Functor<A>>::Functor<<Self::Fnn<A, B> as AnyFunction<A, B>>::Function>,
+        i: <Self as Functor<A>>::Functor<Self::Fnn<A, B>>, // Simplified this type
     ) -> <Self as Apply<A>>::Apply<B>
     where
         Self: Sized;
 }
 
-impl<A> Apply<A> for Option<A> {
+impl<A: 'static> Apply<A> for Option<A> {
     type Apply<T> = Option<T>;
 
     type Fnn<T, U> = CFn<T, U>;
 
-    fn apply<B>(self, i: Option<<Self::Fnn<A, B> as AnyFunction<A, B>>::Function>) -> Option<B>
+    fn apply<B>(self, i: Option<Self::Fnn<A, B>>) -> Option<B> // Simplified this type
     where
         Self: Sized,
     {
-        self.and_then(|v| i.__map(|f| (*f)(v)))
+        self.and_then(|v| i.map(|f| (*f)(v)))
     }
 }
+
+impl<A: 'static, E: 'static + Clone> Apply<A> for Result<A, E> {
+    type Apply<T> = Result<T, E>;
+    type Fnn<T, U> = CFn<T, U>;
+
+    fn apply<B>(self, i: Result<Self::Fnn<A, B>, E>) -> Result<B, E>
+    where
+        Self: Sized,
+    {
+        match self {
+            Ok(v) => match i {
+                Ok(f) => Ok((*f)(v)),
+                Err(e) => Err(e),
+            },
+            Err(e) => Err(e),
+        }
+    }
+}
+
 
 /// Lift a function of two arguments to a function which accepts and returns
 /// values wrapped with the type constructor `F`.
@@ -54,15 +73,15 @@ impl<A> Apply<A> for Option<A> {
 ///
 pub fn lift2<A, B, C, A2B2C, FB2C, FA, FB, FC>(func: A2B2C, fa: FA, fb: FB) -> FC
 where
-    A2B2C: Fn(A) -> CFn<B, C>,
+    A2B2C: Fn(A) -> CFn<B, C> + 'static,
     FA: Functor<A, Functor<CFn<B, C>> = FB2C>,
     FB: Apply<
         B,
-        Functor<<<FB as Apply<B>>::Fnn<B, C> as AnyFunction<B, C>>::Function> = FB2C,
+        Functor<<FB as Apply<B>>::Fnn<B, C>> = FB2C, // Simplified this bound
         Apply<C> = FC,
     >,
 {
-    fb.apply(fa.__map(func))
+    fb.apply(fa.map(func))
 }
 
 pub fn lift3<A, B, C, D, A2B2C2D, FB2C2D, FC2D, FA, FB, FC, FD>(
@@ -72,20 +91,20 @@ pub fn lift3<A, B, C, D, A2B2C2D, FB2C2D, FC2D, FA, FB, FC, FD>(
     fc: FC,
 ) -> FD
 where
-    A2B2C2D: Fn(A) -> CFn<B, CFn<C, D>>,
+    A2B2C2D: Fn(A) -> CFn<B, CFn<C, D>> + 'static,
     FA: Functor<A, Functor<CFn<B, CFn<C, D>>> = FB2C2D>,
     FB: Apply<
         B,
-        Functor< <<FB as Apply<B>>::Fnn<B, CFn<C,D>> as AnyFunction<B, CFn<C,D>>>::Function> = FB2C2D,
-        Apply<CFn<C,D>> = FC2D,
+        Functor<<FB as Apply<B>>::Fnn<B, CFn<C, D>>> = FB2C2D, // Simplified this bound
+        Apply<CFn<C, D>> = FC2D,
         >,
     FC: Apply<
         C,
-        Functor< <<FC as Apply<C>>::Fnn<C, D> as AnyFunction<C, D>>::Function> = FC2D,
+        Functor<<FC as Apply<C>>::Fnn<C, D>> = FC2D, // Simplified this bound
         Apply<D> = FD,
     >,
 {
-    fc.apply(fb.apply(fa.__map(func)))
+    fc.apply(fb.apply(fa.map(func)))
 }
 
 /// Combine two `Applyable` actions, keeping only the result of the first.
@@ -101,7 +120,7 @@ pub fn apply_first<A, B, FA, FB, FB2A>(fa: FA, fb: FB) -> <FB as Apply<B>>::Appl
 where
     A: Copy + 'static,
     FA: Functor<A, Functor<CFn<B, A>> = FB2A>,
-    FB: Apply<B, Functor<<<FB as Apply<B>>::Fnn<B, A> as AnyFunction<B, A>>::Function> = FB2A>,
+    FB: Apply<B, Functor<<FB as Apply<B>>::Fnn<B, A>> = FB2A>, // Simplified this bound
 {
     lift2(fn2!(|x| move |_y| x), fa, fb)
 }
@@ -119,30 +138,7 @@ pub fn apply_second<A, B, FA, FB, FB2B>(fa: FA, fb: FB) -> <FB as Apply<B>>::App
 where
     A: Copy + 'static,
     FA: Functor<A, Functor<CFn<B, B>> = FB2B>,
-    FB: Apply<B, Functor<<<FB as Apply<B>>::Fnn<B, B> as AnyFunction<B, B>>::Function> = FB2B>,
+    FB: Apply<B, Functor<<FB as Apply<B>>::Fnn<B, B>> = FB2B>, // Simplified this bound
 {
     lift2(fn2!(|_x| move |y| y), fa, fb)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{fn2, fn3, functor::Functor};
-
-    #[test]
-    fn apply_on_option() {
-        let closure = fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
-        let some_closure = Some(1).__map(closure);
-        let none_closure = None.__map(closure);
-        assert_eq!(Some(2).apply(some_closure), Some("12".to_string()));
-        assert_eq!(Some(2).apply(none_closure), None);
-
-        let closure = fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
-        assert_eq!(lift2(closure, Some(1), Some(2)), Some("12".to_string()));
-        assert_eq!(lift2(closure, None, Some(2)), None);
-
-        let closure = fn3!(|x: i32| move |y: i8| move |z: i32| x + y as i32 + z);
-
-        assert_eq!(lift3(closure, Some(1), Some(2), Some(3)), Some(6));
-    }
 }

@@ -4,7 +4,10 @@ use crate::monad::Bind;
 
 type BFn<A, B> = Box<dyn Fn(A) -> B + 'static>;
 
-pub struct CFn<A, B>(BFn<A, B>);
+type BFnOnce<A, B> = Box<dyn FnOnce(A) -> B + 'static>;
+
+pub struct CFn<A, B>(pub BFn<A, B>);
+pub struct CFnOnce<A, B>(pub BFnOnce<A, B>);
 
 impl<A, B> CFn<A, B> {
     pub fn new<F>(f: F) -> Self
@@ -12,6 +15,23 @@ impl<A, B> CFn<A, B> {
         F: Fn(A) -> B + 'static,
     {
         CFn(Box::new(f))
+    }
+
+    pub fn call(&self, arg: A) -> B {
+        (self.0)(arg)
+    }
+}
+
+impl<A, B> CFnOnce<A, B> {
+    pub fn new<F>(f: F) -> Self
+    where
+        F: FnOnce(A) -> B + 'static,
+    {
+        CFnOnce(Box::new(f))
+    }
+
+    pub fn call_once(self, arg: A) -> B {
+        (self.0)(arg)
     }
 }
 
@@ -23,34 +43,19 @@ impl<A, B> Deref for CFn<A, B> {
     }
 }
 
-pub trait AnyFunction<A, B> {
-    type Function: FnOnce(A) -> B;
-}
+impl<A, B> Deref for CFnOnce<A, B> {
+    type Target = BFnOnce<A, B>;
 
-impl<A, B> AnyFunction<A, B> for CFn<A, B> {
-    type Function = CFn<A, B>;
-}
-
-impl<A, B> FnOnce<(A,)> for CFn<A, B> {
-    type Output = B;
-    extern "rust-call" fn call_once(self, b: (A,)) -> Self::Output {
-        self.0.call_once(b)
-    }
-}
-
-impl<A, B> Fn<(A,)> for CFn<A, B> {
-    extern "rust-call" fn call(&self, b: (A,)) -> Self::Output {
-        self.0.call(b)
-    }
-}
-
-impl<A, B> FnMut<(A,)> for CFn<A, B> {
-    extern "rust-call" fn call_mut(&mut self, b: (A,)) -> Self::Output {
-        self.0.call_mut(b)
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
 fn compose<A: 'static, B: 'static, C: 'static>(f: BFn<A, B>, g: BFn<B, C>) -> BFn<A, C> {
+    Box::new(move |x| g(f(x)))
+}
+
+fn compose_fn_once<A: 'static, B: 'static, C: 'static>(f: BFnOnce<A, B>, g: BFnOnce<B, C>) -> BFnOnce<A, C> {
     Box::new(move |x| g(f(x)))
 }
 
@@ -65,6 +70,20 @@ impl<A: 'static, B: 'static, C: 'static> std::ops::Shl<CFn<A, B>> for CFn<B, C> 
     type Output = CFn<A, C>;
     fn shl(self, rhs: CFn<A, B>) -> Self::Output {
         CFn(compose(rhs.0, self.0))
+    }
+}
+
+impl<A: 'static, B: 'static, C: 'static> std::ops::Shr<CFnOnce<B, C>> for CFnOnce<A, B> {
+    type Output = CFnOnce<A, C>;
+    fn shr(self, rhs: CFnOnce<B, C>) -> Self::Output {
+        CFnOnce(compose_fn_once(self.0, rhs.0))
+    }
+}
+
+impl<A: 'static, B: 'static, C: 'static> std::ops::Shl<CFnOnce<A, B>> for CFnOnce<B, C> {
+    type Output = CFnOnce<A, C>;
+    fn shl(self, rhs: CFnOnce<A, B>) -> Self::Output {
+        CFnOnce(compose_fn_once(rhs.0, self.0))
     }
 }
 

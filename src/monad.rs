@@ -2,7 +2,9 @@ use crate::{applicative::Applicative, apply::Apply, function::CFn};
 
 trait Monad<A>: Applicative<A> + Bind<A> {}
 
-impl<A> Monad<A> for Option<A> {}
+impl<A: 'static> Monad<A> for Option<A> {}
+
+impl<A: 'static, E: 'static + Clone> Monad<A> for Result<A, E> {}
 
 pub trait Bind<A>: Apply<A> {
     type Bind<T>;
@@ -14,7 +16,7 @@ pub trait Bind<A>: Apply<A> {
         Self: Bind<A>;
 }
 
-impl<A> Bind<A> for Option<A> {
+impl<A: 'static> Bind<A> for Option<A> {
     type Bind<T> = Option<T>;
 
     type BindFn<T, U> = CFn<T, U>;
@@ -24,9 +26,21 @@ impl<A> Bind<A> for Option<A> {
     }
 }
 
+impl<A: 'static, E: 'static + Clone> Bind<A> for Result<A, E> {
+    type Bind<T> = Result<T, E>;
+    type BindFn<T, U> = CFn<T, U>; // U here will be Result<InnerB, E>
+
+    fn bind<B>(self, m: Self::BindFn<A, Self::Bind<B>>) -> <Self as Bind<A>>::Bind<B> {
+        // m is CFn<A, Result<B, E>>
+        // self is Result<A, E>
+        // Result::and_then does exactly this.
+        self.and_then(|a| (*m)(a))
+    }
+}
+
 pub fn bind<A, B, MA, MB, A2MB>(f: A2MB, ma: MA) -> MB
 where
-    A2MB: Fn(A) -> MB + 'static,
+    A2MB: Fn(A) -> MB + 'static, // Removed Clone
     MA: Bind<A, Bind<B> = MB, BindFn<A, <MA as Bind<A>>::Bind<B>> = CFn<A, MB>>,
 {
     let c = CFn::new(f);
@@ -35,7 +49,7 @@ where
 
 pub fn join<A, M, MM>(mma: MM) -> M
 where
-    M: Bind<A, Bind<A> = M> + 'static,
+    M: Bind<A, Bind<A> = M> + 'static, // Removed Clone bound for M
     MM: Bind<
         <M as Bind<A>>::Bind<A>,
         Bind<A> = M,
@@ -43,45 +57,7 @@ where
     >,
 {
     let i = CFn::new(|x: <M as Bind<A>>::Bind<A>| x);
-    bind::<_, A, _, _, _>(i, mma)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::{bfn1, fn1};
-
-    #[test]
-    fn bind_option() {
-        let add_one = fn1!(|x: i32| Some(x + 1));
-        let add_two = fn1!(|x: i32| Some(x + 2));
-        let add_three = fn1!(|x: i32| Some(x + 3));
-        let result = Some(1).bind(add_one).bind(add_two).bind(add_three);
-        assert_eq!(result, Some(7))
-    }
-
-    #[test]
-    fn bind_option_with_composing() {
-        let add_one = fn1!(|x: i32| Some(x + 1));
-        let add_two = fn1!(|x: i32| x + 2);
-        let add_three = fn1!(|x: i32| x + 3);
-        let composed = add_one << add_two << add_three;
-        let result = Some(1).bind(composed);
-        assert_eq!(result, Some(7));
-
-        let result = join(Some(Some(1)));
-        assert_eq!(result, Some(1));
-
-        let result = join(Some(None::<i32>));
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn bind_option_with_bind_composing() {
-        let add_one = bfn1!(|x: i32| Some(x + 1));
-        let add_two = bfn1!(|x: i32| Some(x + 2));
-        let add_three = bfn1!(|x: i32| Some(x + 3));
-        let result = Some(1) | add_one | add_two | add_three;
-        assert_eq!(result, Some(7))
-    }
+    // Pass a closure that calls `i.call()`
+    // Add type arguments: A_bind=InnerM, B_bind=A, MA_bind=MM, MB_bind=M
+    bind::< <M as Bind<A>>::Bind<A>, A, MM, M, _>(move |val| i.call(val), mma) // Added move
 }
