@@ -9,7 +9,7 @@
 ## Key Technical Decisions
 - **Focus on Idiomatic Rust:** Prioritize solutions that align with Rust's ownership, borrowing, and type system principles. Avoid direct translations from other languages if they result in unidiomatic Rust.
 - **Leverage Existing Rust Types:** Where appropriate, implement monadic traits for standard Rust types like `Option<T>`, `Result<T, E>`, and `Vec<T>` to showcase their monadic nature and provide immediate utility.
-- **Higher-Kinded Types (HKT) Emulation:** Since Rust does not natively support Higher-Kinded Types, the project will likely use common workarounds or emulations (e.g., associated types, specific trait patterns) to achieve a degree of generic programming over type constructors. This is a critical area and decisions here will significantly impact the library's design.
+- **Higher-Kinded Types (HKT) Emulation:** Since Rust does not natively support Higher-Kinded Types, the project will likely use common workarounds or emulations (e.g., associated types, specific trait patterns) to achieve a degree of generic programming over type constructors. This is a critical area and decisions here will significantly impact the library's design. (See also: [HKT Constraints in Tech Context](./techContext.md#higher-kinded-types-hkts))
 - **Minimal Dependencies:** Aim to keep external dependencies to a minimum to ensure the library is lightweight and easy to integrate.
 
 ## Design Patterns in Use

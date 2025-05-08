@@ -12,7 +12,7 @@
 - **Toolchain Management:** `rustup` (standard Rust toolchain manager). The `rust-toolchain.toml` file pins the toolchain to `stable` for consistency.
 
 ## Technical Constraints
-- **Higher-Kinded Types (HKTs):** Rust's lack of native HKTs is a primary constraint. Implementations will need to use established patterns (e.g., associated types, helper traits) to emulate HKTs, which can add complexity.
+- **Higher-Kinded Types (HKTs):** Rust's lack of native HKTs is a primary constraint. Implementations will need to use established patterns (e.g., associated types, helper traits) to emulate HKTs, which can add complexity. (See also: [HKT Emulation in System Patterns](./systemPatterns.md#higher-kinded-types-hkt-emulation))
 - **Ownership and Borrowing:** All implementations must strictly adhere to Rust's ownership and borrowing rules. This can make direct translation of monadic patterns from languages with garbage collection challenging but also leads to safer code.
 - **Type System:** Leveraging Rust's strong, static type system to ensure correctness and provide good compile-time errors.
 - **Performance:** While correctness and clarity are primary, implementations should strive to be reasonably performant, avoiding unnecessary allocations or overhead where possible.
