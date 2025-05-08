@@ -18,14 +18,14 @@ pub trait Profunctor<B, C> {
         C: 'static,
         D: 'static;
 
-    fn dimap_<A, D>(self, a2b: CFn<A, B>, c2d: CFn<C, D>) -> Self::Pro<A, D>
-    where
-        // A2B: CFn<A,B>,
-        // C2D: Fn(C) -> D + 'static,
-        A: 'static,
-        B: 'static,
-        C: 'static,
-        D: 'static;
+    // fn dimap_<A, D>(self, a2b: CFn<A, B>, c2d: CFn<C, D>) -> Self::Pro<A, D>
+    // where
+    //     // A2B: CFn<A,B>,
+    //     // C2D: Fn(C) -> D + 'static,
+    //     A: 'static,
+    //     B: 'static,
+    //     C: 'static,
+    //     D: 'static;
 }
 
 impl<B, C> Profunctor<B, C> for CFn<B, C> {
@@ -39,18 +39,19 @@ impl<B, C> Profunctor<B, C> for CFn<B, C> {
         A: 'static,
         D: 'static,
     {
-        CFn::new(a2b) >> self >> CFn::new(c2d)
+        // Trying simplified implementation again: c2d(self(a2b(a)))
+        CFn::new(move |a: A| c2d(self.call(a2b(a))))
     }
 
-    fn dimap_<A, D>(self, a2b: CFn<A, B>, c2d: CFn<C, D>) -> Self::Pro<A, D>
-    where
-        C: 'static,
-        B: 'static,
-        A: 'static,
-        D: 'static,
-    {
-        a2b >> self >> c2d
-    }
+    // fn dimap_<A, D>(self, a2b: CFn<A, B>, c2d: CFn<C, D>) -> Self::Pro<A, D>
+    // where
+    //     C: 'static,
+    //     B: 'static,
+    //     A: 'static,
+    //     D: 'static,
+    // {
+    //     a2b >> self >> c2d
+    // }
 }
 
 impl<B, C> Profunctor<B, C> for CFnOnce<B, C> {
@@ -64,18 +65,19 @@ impl<B, C> Profunctor<B, C> for CFnOnce<B, C> {
         A: 'static,
         D: 'static,
     {
-        CFnOnce::new(a2b) >> self >> CFnOnce::new(c2d)
+        // Trying simplified implementation again: c2d(self(a2b(a)))
+        CFnOnce::new(move |a: A| c2d(self.call_once(a2b(a))))
     }
 
-    fn dimap_<A, D>(self, a2b: CFn<A, B>, c2d: CFn<C, D>) -> Self::Pro<A, D>
-    where
-        C: 'static,
-        B: 'static,
-        A: 'static,
-        D: 'static,
-    {
-        CFnOnce::new(move |x| a2b.call(x)) >> self >> CFnOnce::new(move |x| c2d.call(x))
-    }
+    // fn dimap_<A, D>(self, a2b: CFn<A, B>, c2d: CFn<C, D>) -> Self::Pro<A, D>
+    // where
+    //     C: 'static,
+    //     B: 'static,
+    //     A: 'static,
+    //     D: 'static,
+    // {
+    //     CFnOnce::new(move |x| a2b.call(x)) >> self >> CFnOnce::new(move |x| c2d.call(x))
+    // }
 }
 
 pub trait Strong<A, B>: Profunctor<A, B> {
@@ -121,19 +123,19 @@ pub struct Optic<POuter: Profunctor<S, T>, PInner: Profunctor<A, B>, S, T, A, B>
     _b: PhantomData<B>,
 }
 
-// Optic_ is not used in tests, keeping it private for now. If needed, will make pub.
-struct Optic_<P: Profunctor<A, B, Pro<S, T> = P>, S, T, A, B> {
-    optic: Box<dyn FnOnce(P) -> P>,
-    _s: PhantomData<S>,
-    _t: PhantomData<T>,
-    _a: PhantomData<A>,
-    _b: PhantomData<B>,
-}
+// // Optic_ is not used in tests, keeping it private for now. If needed, will make pub.
+// struct Optic_<P: Profunctor<A, B, Pro<S, T> = P>, S, T, A, B> {
+//     optic: Box<dyn FnOnce(P) -> P>,
+//     _s: PhantomData<S>,
+//     _t: PhantomData<T>,
+//     _a: PhantomData<A>,
+//     _b: PhantomData<B>,
+// }
 
 pub struct Lens<PO: Strong<S, T>, PI: Strong<A, B>, S, T, A, B>(pub Optic<PO, PI, S, T, A, B>); // Made tuple field public
 
-// Lens_ is not used in tests, keeping it private for now.
-struct Lens_<P: Strong<A, B, Pro<S, T> = P>, S, T, A, B>(Optic_<P, S, T, A, B>);
+// // Lens_ is not used in tests, keeping it private for now.
+// struct Lens_<P: Strong<A, B, Pro<S, T> = P>, S, T, A, B>(Optic_<P, S, T, A, B>);
 
 impl<PO: Strong<S, T>, PI: Strong<A, B>, S, T, A, B> Deref for Lens<PO, PI, S, T, A, B> {
     type Target = Optic<PO, PI, S, T, A, B>;
@@ -154,7 +156,8 @@ impl<PA: Strong<S, T>, PB: Strong<A, B>, S, T, A, B> From<Lens<PA, PB, S, T, A, 
     }
 }
 
-pub fn view<S, T, A: 'static, B>(lens: AGetter<S, T, A, B>, s: S) -> A { // Made public
+pub fn view<S, T, A: 'static, B>(lens: AGetter<S, T, A, B>, s: S) -> A {
+    // Made public
     let forget = Forget {
         inner: CFn::new(|x| x),
         _forget: PhantomData,
@@ -163,7 +166,8 @@ pub fn view<S, T, A: 'static, B>(lens: AGetter<S, T, A, B>, s: S) -> A { // Made
 }
 
 // type Forget<R, A, B> = Box<dyn FnOnce(A) -> R>;
-pub struct Forget<R, A, B> { // Made public
+pub struct Forget<R, A, B> {
+    // Made public
     inner: CFn<A, R>,
     _forget: PhantomData<B>,
 }
@@ -184,17 +188,17 @@ impl<R: 'static, B, C> Profunctor<B, C> for Forget<R, B, C> {
         }
     }
 
-    fn dimap_<A, D>(self, a2b: CFn<A, B>, _c2d: CFn<C, D>) -> Self::Pro<A, D> // Prefixed c2d with _
-    where
-        A: 'static,
-        B: 'static,
-        D: 'static,
-    {
-        Forget {
-            inner: a2b >> self.inner, // _c2d is not used here
-            _forget: PhantomData,
-        }
-    }
+    // fn dimap_<A, D>(self, a2b: CFn<A, B>, _c2d: CFn<C, D>) -> Self::Pro<A, D> // Prefixed c2d with _
+    // where
+    //     A: 'static,
+    //     B: 'static,
+    //     D: 'static,
+    // {
+    //     Forget {
+    //         inner: a2b >> self.inner, // _c2d is not used here
+    //         _forget: PhantomData,
+    //     }
+    // }
 }
 
 impl<R: 'static, B: 'static, C> Strong<B, C> for Forget<R, B, C> {
@@ -213,7 +217,8 @@ impl<R: 'static, B: 'static, C> Strong<B, C> for Forget<R, B, C> {
     }
 }
 
-pub fn lens_<PO, PI, PBC, S: 'static, T: 'static, A: 'static, B: 'static>( // Made public
+pub fn lens_<PO, PI, PBC, S: 'static, T: 'static, A: 'static, B: 'static>(
+    // Made public
     to: CFn<S, (A, CFn<B, T>)>,
 ) -> Lens<PO, PBC, S, T, A, B>
 where
@@ -237,8 +242,9 @@ where
     })
 }
 
-pub fn lens<PO, PI, S: Copy + 'static, T: 'static, A: 'static, B: 'static>( // Already public
-    s2a: CFn<S, A>, // CFn is already Clone
+pub fn lens<PO, PI, S: Copy + 'static, T: 'static, A: 'static, B: 'static>(
+    // Already public
+    s2a: CFn<S, A>,           // CFn is already Clone
     s2b2t: CFn<S, CFn<B, T>>, // CFn is already Clone
 ) -> Lens<PO, PI, S, T, A, B>
 where
@@ -281,7 +287,8 @@ where
 //     lens_(dimap_profunctor)
 // }
 
-pub fn _1< // Made public
+pub fn _1<
+    // Made public
     A: 'static,
     B: 'static,
     C: 'static,
@@ -297,7 +304,8 @@ pub fn _1< // Made public
     })
 }
 
-pub fn _2< // Made public
+pub fn _2<
+    // Made public
     A: 'static,
     B: 'static,
     C: 'static,
@@ -313,7 +321,8 @@ pub fn _2< // Made public
     })
 }
 
-fn _1_new<A: Copy + 'static, B: Copy + 'static, PO, PI>() -> Lens<PO, PI, (A, B), (A, B), A, B> // Removed A: Clone
+fn _1_new<A: Copy + 'static, B: Copy + 'static, PO, PI>() -> Lens<PO, PI, (A, B), (A, B), A, B>
+// Removed A: Clone
 where
     PI: Strong<A, B>,
     PO: Strong<(A, B), (A, B)>,
@@ -327,12 +336,14 @@ where
 }
 
 #[derive(Clone, Copy)]
-pub struct Check { // Made public
-    pub key: i8, // Made public
-    pub other: i8 // Made public
+pub struct Check {
+    // Made public
+    pub key: i8,   // Made public
+    pub other: i8, // Made public
 }
 
-pub fn _key<PO, PI>() -> Lens<PO, PI, Check, Check, i8, i8> // Already public
+pub fn _key<PO, PI>() -> Lens<PO, PI, Check, Check, i8, i8>
+// Already public
 where
     PO: Strong<Check, Check>,
     PI: Strong<i8, i8>,
@@ -358,7 +369,8 @@ where
 //     )
 // }
 
-pub fn lcmap<A, B, C, F, Pbc, Pac>(a2b: F, profunctor: Pbc) -> Pac // Made public
+pub fn lcmap<A, B, C, F, Pbc, Pac>(a2b: F, profunctor: Pbc) -> Pac
+// Made public
 where
     A: 'static,
     B: 'static,
@@ -369,7 +381,8 @@ where
     profunctor.dimap(a2b, |x| x)
 }
 
-pub fn rmap<A, B, C, F, Pab, Pac>(b2c: F, profunctor: Pab) -> Pac // Already public
+pub fn rmap<A, B, C, F, Pab, Pac>(b2c: F, profunctor: Pab) -> Pac
+// Already public
 where
     A: 'static,
     B: 'static,

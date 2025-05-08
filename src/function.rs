@@ -55,7 +55,10 @@ fn compose<A: 'static, B: 'static, C: 'static>(f: BFn<A, B>, g: BFn<B, C>) -> BF
     Box::new(move |x| g(f(x)))
 }
 
-fn compose_fn_once<A: 'static, B: 'static, C: 'static>(f: BFnOnce<A, B>, g: BFnOnce<B, C>) -> BFnOnce<A, C> {
+fn compose_fn_once<A: 'static, B: 'static, C: 'static>(
+    f: BFnOnce<A, B>,
+    g: BFnOnce<B, C>,
+) -> BFnOnce<A, C> {
     Box::new(move |x| g(f(x)))
 }
 
@@ -108,17 +111,5 @@ where
         F: Fn(A) -> M + 'static,
     {
         BindableFn(CFn::new(f))
-    }
-}
-
-impl<M, A, B> std::ops::BitOr<BindableFn<M, A, B>> for BindType<M, A, A>
-where
-    M: Bind<B> + Bind<A, Bind<A> = M>,
-    M: Bind<A, Bind<B> = M, BindFn<A, <M as Bind<A>>::Bind<B>> = CFn<A, M>>,
-{
-    type Output = BindType<M, A, B>;
-
-    fn bitor(self, rhs: BindableFn<M, A, B>) -> Self::Output {
-        <M as Bind<A>>::bind::<B>(self, rhs.0)
     }
 }

@@ -1,7 +1,4 @@
-use crate::{
-    apply::Apply,
-    function::{CFn},
-};
+use crate::{apply::Apply, function::CFn};
 
 /// A Applicative
 ///
@@ -30,6 +27,15 @@ impl<A: 'static, E: 'static + Clone> Applicative<A> for Result<A, E> {
 
     fn pure(v: A) -> Self::Applicative<A> {
         Ok(v)
+    }
+}
+
+impl<A: 'static + Clone> Applicative<A> for Vec<A> {
+    // A needs to be Clone due to Apply<A> for Vec<A>
+    type Applicative<T> = Vec<T>;
+
+    fn pure(v: A) -> Self::Applicative<A> {
+        vec![v]
     }
 }
 

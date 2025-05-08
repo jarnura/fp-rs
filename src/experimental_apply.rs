@@ -1,5 +1,5 @@
 use crate::{
-    function::{CFn}, // Note: AnyFunction is not needed here
+    function::CFn, // Note: AnyFunction is not needed here
     functor::Functor,
 };
 

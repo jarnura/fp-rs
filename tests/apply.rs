@@ -7,7 +7,8 @@
 
 use fp_rs::apply::{lift2, lift3}; // lift2, lift3 are in the apply module
 use fp_rs::Apply; // Apply is re-exported
-use fp_rs::Functor; // Functor is re-exported
+#[allow(unused_imports)] // Suppress incorrect warning; import needed for .map()
+use fp_rs::Functor; // Functor is re-exported // Restoring import
 use fp_rs::{fn2, fn3}; // Macros are at crate root
 
 #[cfg(test)]

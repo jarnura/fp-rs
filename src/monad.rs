@@ -1,5 +1,6 @@
 use crate::{applicative::Applicative, apply::Apply, function::CFn};
 
+#[allow(dead_code)] // Intentionally kept as a marker trait for the hierarchy
 trait Monad<A>: Applicative<A> + Bind<A> {}
 
 impl<A: 'static> Monad<A> for Option<A> {}
@@ -38,6 +39,35 @@ impl<A: 'static, E: 'static + Clone> Bind<A> for Result<A, E> {
     }
 }
 
+impl<A: 'static + Clone> Bind<A> for Vec<A> {
+    // A needs Clone because Apply<A> for Vec<A> needs it.
+    type Bind<T> = Vec<T>;
+    // The function `m` takes A and returns a Vec<B>.
+    // So BindFn<A, Self::Bind<B>> is CFn<A, Vec<B>>
+    type BindFn<T, U> = CFn<T, U>;
+
+    fn bind<B>(self, m: Self::BindFn<A, Self::Bind<B>>) -> <Self as Bind<A>>::Bind<B> {
+        // self: Vec<A>
+        // m: CFn<A, Vec<B>>
+        // result: Vec<B>
+        // This is equivalent to flat_map in many languages.
+        // For each `a` in `self`, call `m(a)` to get a `Vec<B>`, then flatten results.
+        let mut result_vec = Vec::new();
+        for a in self {
+            // Consumes self (Vec<A>)
+            // m is CFn<A, Vec<B>>. (*m) calls the underlying Box<dyn Fn(A) -> Vec<B>>.
+            // It takes `a` (type A) by value.
+            let vec_b = (*m)(a); // Produces Vec<B>
+            result_vec.extend(vec_b); // Extends result_vec with items from vec_b
+        }
+        result_vec
+    }
+}
+
+// Since Vec<A> implements Applicative<A> and Bind<A>, it can implement Monad<A>.
+// Need A: Clone because Applicative<A> for Vec<A> requires it.
+impl<A: 'static + Clone> Monad<A> for Vec<A> {}
+
 pub fn bind<A, B, MA, MB, A2MB>(f: A2MB, ma: MA) -> MB
 where
     A2MB: Fn(A) -> MB + 'static, // Removed Clone
@@ -59,5 +89,5 @@ where
     let i = CFn::new(|x: <M as Bind<A>>::Bind<A>| x);
     // Pass a closure that calls `i.call()`
     // Add type arguments: A_bind=InnerM, B_bind=A, MA_bind=MM, MB_bind=M
-    bind::< <M as Bind<A>>::Bind<A>, A, MM, M, _>(move |val| i.call(val), mma) // Added move
+    bind::<<M as Bind<A>>::Bind<A>, A, MM, M, _>(move |val| i.call(val), mma) // Added move
 }

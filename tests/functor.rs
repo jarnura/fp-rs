@@ -8,7 +8,8 @@
 
 #[cfg(test)]
 mod tests {
-    use fp_rs::Functor; // Changed from super::Functor
+    #[allow(unused_imports)] // Suppress incorrect warning; import needed for .map()
+    use fp_rs::Functor; // Restoring import
 
     #[test]
     fn add_one() {
@@ -19,8 +20,9 @@ mod tests {
 
 #[cfg(test)]
 mod functor_laws {
-    use fp_rs::Functor; // Changed from super::Functor
-    // use fp_rs::function::CFn; // Example if CFn was from fp_rs::function and used
+    #[allow(unused_imports)] // Suppress incorrect warning; import needed for .map()
+    use fp_rs::Functor; // Restoring import
+                        // use fp_rs::function::CFn; // Example if CFn was from fp_rs::function and used
 
     // Identity law: functor.map(identity) == identity(functor)
     // For Option, this means: opt.map(|x| x) == opt
@@ -76,14 +78,14 @@ mod functor_laws {
     fn option_functor_composition_some_str() {
         let opt = Some("hello");
         let f = |x: &str| x.to_uppercase(); // &str -> String
-        let g = |y: String| y.len();      // String -> usize
+        let g = |y: String| y.len(); // String -> usize
 
         // opt.map(|x| g(f(x)))
         let composed_map = opt.map(|x| g(f(x)));
 
         // opt.map(f).map(g)
         let sequential_map = opt.map(f).map(g);
-        
+
         assert_eq!(composed_map, sequential_map);
         assert_eq!(composed_map, Some(5)); // "HELLO".len() = 5
     }
@@ -91,7 +93,8 @@ mod functor_laws {
 
 #[cfg(test)]
 mod result_functor_laws {
-    use fp_rs::Functor; // Changed from super::Functor
+    #[allow(unused_imports)] // Suppress incorrect warning; import needed for .map()
+    use fp_rs::Functor; // Restoring import
 
     // Identity law: functor.map(identity) == identity(functor)
     // For Result, this means: res.map(|x| x) == res
@@ -147,11 +150,11 @@ mod result_functor_laws {
     fn result_functor_composition_ok_str_err_u32() {
         let res: Result<&str, u32> = Ok("hello");
         let f = |x: &str| x.to_uppercase(); // &str -> String
-        let g = |y: String| y.len();      // String -> usize
+        let g = |y: String| y.len(); // String -> usize
 
         let composed_map = res.clone().map(|x| g(f(x))); // Clone res
         let sequential_map = res.map(f).map(g); // Original res consumed here
-        
+
         assert_eq!(composed_map, sequential_map);
         assert_eq!(composed_map, Ok(5)); // "HELLO".len() = 5
     }
@@ -167,5 +170,80 @@ mod result_functor_laws {
 
         assert_eq!(composed_map, sequential_map);
         assert_eq!(composed_map, Err(404));
+    }
+}
+
+#[cfg(test)]
+mod vec_functor_laws {
+    use fp_rs::Functor; // Restoring import
+
+    // Identity law: functor.map(identity) == identity(functor)
+    // For Vec, this means: vec.map(|x| x) == vec
+
+    #[test]
+    fn vec_functor_identity_non_empty() {
+        let vec_val = vec![10, 20, 30];
+        let identity_fn = |x: i32| x;
+        // The map function in the Functor trait expects Func: FnOnce(A) -> B + 'static.
+        // For Vec, if `identity_fn` is to be called for each element, it effectively needs to be FnMut or Fn.
+        // A simple non-capturing closure like `|x: i32| x` is `Copy`, so it can be treated as `FnOnce` multiple times.
+        assert_eq!(vec_val.clone().map(identity_fn), vec_val);
+    }
+
+    #[test]
+    fn vec_functor_identity_empty() {
+        let vec_val: Vec<i32> = vec![];
+        let identity_fn = |x: i32| x;
+        assert_eq!(vec_val.clone().map(identity_fn), vec_val);
+    }
+
+    // Composition law: functor.map(g . f) == functor.map(f).map(g)
+    // For Vec: vec.map(|x| g(f(x))) == vec.map(f).map(g)
+
+    #[test]
+    fn vec_functor_composition_non_empty() {
+        let vec_val = vec![10, 20, 30];
+        let f = |x: i32| x * 2; // First function
+        let g = |y: i32| y + 5; // Second function
+
+        // vec.map(|x| g(f(x)))
+        let composed_map = vec_val.clone().map(move |x| g(f(x)));
+
+        // vec.map(f).map(g)
+        // Ensure `f` and `g` are `Copy` if they are to be used multiple times by `map`.
+        // Simple closures like these are typically `Copy`.
+        let sequential_map = vec_val.map(f).map(g);
+
+        assert_eq!(composed_map, sequential_map);
+        // Expected: [ (10*2)+5, (20*2)+5, (30*2)+5 ] = [25, 45, 65]
+        assert_eq!(composed_map, vec![25, 45, 65]);
+    }
+
+    #[test]
+    fn vec_functor_composition_empty() {
+        let vec_val: Vec<i32> = vec![];
+        let f = |x: i32| x * 2;
+        let g = |y: i32| y + 5;
+
+        let composed_map = vec_val.clone().map(move |x| g(f(x)));
+        let sequential_map = vec_val.map(f).map(g);
+
+        assert_eq!(composed_map, sequential_map);
+        assert_eq!(composed_map, Vec::<i32>::new());
+    }
+
+    // Test with different types
+    #[test]
+    fn vec_functor_composition_str() {
+        let vec_val = vec!["hello", "world"];
+        let f = |x: &str| x.to_uppercase(); // &str -> String
+        let g = |y: String| y.len(); // String -> usize
+
+        let composed_map = vec_val.clone().map(move |x| g(f(x)));
+        let sequential_map = vec_val.map(f).map(g);
+
+        assert_eq!(composed_map, sequential_map);
+        // Expected: [ "HELLO".len(), "WORLD".len() ] = [5, 5]
+        assert_eq!(composed_map, vec![5, 5]);
     }
 }
