@@ -60,7 +60,7 @@ pub trait Functor<A> {
     /// ```
     fn map<B, Func>(self, f: Func) -> <Self as Functor<A>>::Functor<B>
     where
-        Func: FnMut(A) -> B + 'static; // Changed FnOnce to FnMut
+        Func: Fn(A) -> B + Clone + 'static; // Changed FnMut to Fn, added Clone
 }
 
 /// `Option<A>` as a `Functor`.

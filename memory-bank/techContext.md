@@ -16,6 +16,11 @@
 - **Ownership and Borrowing:** All implementations must strictly adhere to Rust's ownership and borrowing rules. This can make direct translation of monadic patterns from languages with garbage collection challenging but also leads to safer code.
 - **Type System:** Leveraging Rust's strong, static type system to ensure correctness and provide good compile-time errors.
 - **Performance:** While correctness and clarity are primary, implementations should strive to be reasonably performant, avoiding unnecessary allocations or overhead where possible.
+- **Monad Transformers (`ReaderT`):**
+    - The implementation of `ReaderT` was refactored to use `Rc<dyn Fn(R) -> M + 'static>` (from `Box<dyn FnMut(R) -> M + 'static>`) to store its core function. This allows shared ownership of the function, but enforces `Fn` (immutable borrow) semantics for the closure.
+    - This change necessitated stricter adherence to `'static` and `Clone` bounds throughout `ReaderT` and related trait implementations (`Functor`, `Apply`, `Bind`, `MonadReader`).
+    - Specifically, type parameters like `B` in `Apply::apply` now require `'static` bounds in the trait definitions themselves to ensure that the types constructed within `ReaderT` (which must be `'static` due to `Rc<dyn Fn ... + 'static>`) are valid.
+    - `Clone` bounds are frequently required for function arguments to traits (e.g., the `f` in `Functor::map` or `Bind::bind`) and for captured values in closures, especially when these closures are `'static`. The environment `R` in `ReaderT` also often requires `Clone`.
 
 ## Dependencies
 - **Standard Library:** Primarily rely on Rust's standard library (`std`).

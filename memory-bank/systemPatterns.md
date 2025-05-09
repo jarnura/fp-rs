@@ -2,9 +2,9 @@
 
 ## System Architecture
 - **Library Crate:** The project is structured as a Rust library crate, intended to be used as a dependency in other Rust projects.
-- **Modular Design:** Functional programming concepts (Functor, Applicative, Monad, etc.) are organized into separate modules within the `src/` directory (e.g., `functor.rs`, `applicative.rs`, `monad.rs`).
+- **Modular Design:** Functional programming concepts (Functor, Applicative, Monad, etc.) are organized into separate modules within the `src/` directory (e.g., `functor.rs`, `applicative.rs`, `monad.rs`). Monad transformers are in `src/transformers/`.
 - **Trait-based Generics:** Core abstractions are defined using Rust traits, allowing various data types to implement these functional behaviors. This promotes polymorphism and code reuse.
-- **Testing Structure:** Integration tests are located in the top-level `tests/` directory, with files mirroring the module structure under `src/` (e.g., `tests/functor.rs` tests `src/functor.rs`). This follows standard Rust conventions.
+- **Testing Structure:** Integration tests are located in the top-level `tests/` directory. For modules directly under `src/`, test files mirror the module name (e.g., `tests/functor.rs` tests `src/functor.rs`). For submodules like `src/transformers/`, tests are organized similarly within `tests/` (e.g., `tests/transformers/reader_test.rs` tests `src/transformers/reader.rs`). This follows standard Rust conventions.
 
 ## Key Technical Decisions
 - **Focus on Idiomatic Rust:** Prioritize solutions that align with Rust's ownership, borrowing, and type system principles. Avoid direct translations from other languages if they result in unidiomatic Rust.
@@ -16,6 +16,9 @@
 - **Trait-based Polymorphism:** As mentioned, traits are central to defining and implementing functional interfaces.
 - **Type Classes:** The traits for `Functor`, `Applicative`, `Monad`, etc., act as type classes, defining behavior for types that can instantiate them.
 - **Composition over Inheritance:** Functional patterns will be achieved through composition of functions and types, rather than classical inheritance.
+- **Monad Transformers:** Patterns like `ReaderT` allow augmenting existing monads with new capabilities (e.g., access to a read-only environment).
+    - **`ReaderT<R, M, A>`:** A monad transformer that wraps an inner monad `M` and provides access to a read-only environment of type `R`. Computations are of the form `R -> M<A>`. It implements `Functor`, `Apply`, `Applicative`, and `Monad` if the inner monad `M` does. It also implements `MonadReader` to provide `ask` (to get the environment) and `local` (to run a computation with a modified environment).
+    - **`Identity<A>`:** A simple monad that just wraps a value. Often used as the base monad for simpler versions of transformers, e.g., `Reader<R, A>` is `ReaderT<R, Identity<A>, A>`.
 
 ## Component Relationships
 - `functor.rs`: Defines the `Functor` trait (`map` operation). This is a foundational concept.
@@ -26,6 +29,9 @@
 - `utils.rs`: May contain helper functions or common type definitions used across different modules.
 - `function.rs`: Likely contains utilities or traits related to function manipulation, currying, composition, etc., which are often used in functional programming.
 - `profunctor.rs`: Implements the `Profunctor` concept, which is related but distinct from Functors and Monads, dealing with bifunctorial mappings.
+- `identity.rs`: Defines the `Identity` monad.
+- `transformers/reader.rs`: Defines `ReaderT` and the `MonadReader` trait.
+- `transformers/mod.rs`: Module for organizing monad transformers.
 
 ## Critical Implementation Paths
 - **Defining the core traits:** `Functor`, `Apply`, `Applicative`, `Monad` traits with their associated methods.

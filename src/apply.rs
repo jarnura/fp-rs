@@ -73,7 +73,10 @@ pub trait Apply<A>: Functor<A> {
         i: <Self as Functor<A>>::Functor<Self::Fnn<A, B>>, // Simplified this type
     ) -> <Self as Apply<A>>::Apply<B>
     where
-        Self: Sized;
+        Self: Sized,
+        B: 'static, // Added B: 'static, necessary for ReaderT and consistent for others
+        // Add 'static bound back to trait definition to match ReaderT impl requirement
+        <Self as Functor<A>>::Functor<Self::Fnn<A, B>>: 'static;
 }
 
 /// `Option<A>` as an `Apply`.
@@ -221,9 +224,9 @@ impl<A: 'static + Clone> Apply<A> for Vec<A> {
 /// // Expected: [1+10, 1+20, 2+10, 2+20] = [11, 21, 12, 22]
 /// assert_eq!(lift2(curried_add, vec_a, vec_b), vec![11, 21, 12, 22]);
 /// ```
-pub fn lift2<A, B, C, A2B2C, FB2C, FA, FB, FC>(func: A2B2C, fa: FA, fb: FB) -> FC
+pub fn lift2<A, B, C: 'static, A2B2C, FB2C: 'static, FA, FB, FC>(func: A2B2C, fa: FA, fb: FB) -> FC
 where
-    A2B2C: Fn(A) -> CFn<B, C> + 'static, // func: A -> (B -> C)
+    A2B2C: Fn(A) -> CFn<B, C> + Clone + 'static, // func: A -> (B -> C), Added Clone
     FA: Functor<A, Functor<CFn<B, C>> = FB2C>, // fa.map(func) results in F<B -> C>
     FB: Apply<B, Functor<<FB as Apply<B>>::Fnn<B, C>> = FB2C, Apply<C> = FC>, // F<B -> C>.apply(fb) results in F<C>
 {
@@ -261,14 +264,14 @@ where
 /// assert_eq!(lift3(curried_add3, Some(1), Some(2), Some(3)), Some(6));
 /// assert_eq!(lift3(curried_add3, Some(1), None, Some(3)), None);
 /// ```
-pub fn lift3<A, B, C, D, A2B2C2D, FB2C2D, FC2D, FA, FB, FC, FD>(
+pub fn lift3<A, B, C: 'static, D: 'static, A2B2C2D, FB2C2D: 'static, FC2D: 'static, FA, FB, FC, FD>(
     func: A2B2C2D,
     fa: FA,
     fb: FB,
     fc: FC,
 ) -> FD
 where
-    A2B2C2D: Fn(A) -> CFn<B, CFn<C, D>> + 'static, // A -> (B -> (C -> D))
+    A2B2C2D: Fn(A) -> CFn<B, CFn<C, D>> + Clone + 'static, // A -> (B -> (C -> D)), Added Clone
     FA: Functor<A, Functor<CFn<B, CFn<C, D>>> = FB2C2D>,
     FB: Apply<B, Functor<<FB as Apply<B>>::Fnn<B, CFn<C, D>>> = FB2C2D, Apply<CFn<C, D>> = FC2D>,
     FC: Apply<C, Functor<<FC as Apply<C>>::Fnn<C, D>> = FC2D, Apply<D> = FD>,
@@ -319,7 +322,7 @@ where
 /// // This matches Haskell's (<*) behavior for lists: [1,2] <* [10,20] == [1,1,2,2]
 /// assert_eq!(apply_first(vec![1,2], vec![10,20]), vec![1,1,2,2]);
 /// ```
-pub fn apply_first<A, B, FA, FB, FB2A>(fa: FA, fb: FB) -> <FB as Apply<B>>::Apply<A>
+pub fn apply_first<A, B, FA, FB, FB2A: 'static>(fa: FA, fb: FB) -> <FB as Apply<B>>::Apply<A>
 where
     A: Copy + 'static, 
     B: 'static, // For CFn type in the closure
@@ -375,7 +378,7 @@ where
     B: 'static, // For the CFn argument and return type
     FA: Functor<A, Functor<CFn<B, B>> = FMapResult>, 
     FB: Apply<B, Functor<<FB as Apply<B>>::Fnn<B, B>> = FMapResult, Apply<B> = ResultApplyB>, 
-    FMapResult: Functor<<FB as Apply<B>>::Fnn<B, B>>, 
+    FMapResult: Functor<<FB as Apply<B>>::Fnn<B, B>> + 'static, // Added 'static bound
 {
     // The function to pass to map should be `A -> CFn<B,B>`.
     // This function is `|_ignored_a: A| CFn::new(|b_val: B| b_val)`.

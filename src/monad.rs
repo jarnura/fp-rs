@@ -76,7 +76,7 @@ pub trait Bind<A>: Apply<A> {
     /// ```
     fn bind<B, F>(self, f: F) -> Self::Bind<B>
     where
-        F: Fn(A) -> Self::Bind<B> + 'static;
+        F: Fn(A) -> Self::Bind<B> + Clone + 'static; // Added Clone bound
 }
 
 /// `Option<A>` as `Bind`.
@@ -175,7 +175,7 @@ impl<A: 'static + Clone> Monad<A> for Vec<A> {}
 /// ```
 pub fn bind<A, B, MA, MB, F>(f: F, ma: MA) -> MB
 where
-    F: Fn(A) -> MB + 'static,
+    F: Fn(A) -> MB + Clone + 'static, // Added Clone
     MA: Bind<A, Bind<B> = MB>, // MA is M<A>, MB is M<B>
 {
     // Call the trait method.

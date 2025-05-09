@@ -8,8 +8,10 @@ pub mod apply;
 pub mod experimental_apply; // Consider if this should be public or feature-gated
 pub mod function;
 pub mod functor;
+pub mod identity; // Added
 pub mod monad;
 pub mod profunctor;
+pub mod transformers; // Added
 pub mod utils;
 
 // Public re-exports of core traits
@@ -18,9 +20,14 @@ pub use apply::Apply;
 pub use functor::Functor;
 pub use monad::{Bind, Monad}; // Re-export Monad as well
 pub use profunctor::{Choice, Profunctor, Strong};
+pub use transformers::reader::MonadReader; // Added
 
 // Public re-exports of key structs/types (optional, but can be convenient)
 pub use function::{CFn, CFnOnce};
+pub use identity::Identity; // Added
+pub use transformers::reader::ReaderT; // Added
+// Consider re-exporting the Reader type alias as well:
+// pub use transformers::reader::Reader;
 
 // Note on macros:
 // Macros defined with `#[macro_export]` in submodules (like `utils.rs`) are

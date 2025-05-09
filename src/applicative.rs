@@ -138,14 +138,14 @@ impl<A: 'static + Clone> Applicative<A> for Vec<A> {
 /// // assert_eq!(lift_a1(add_one, vec_val), vec![2, 3, 4]);
 /// ```
 #[allow(clippy::module_name_repetitions)] // Name lift_a1 is established.
-pub fn lift_a1<AppCtx, A, B, FnHook, AppFnCtx>(
+pub fn lift_a1<AppCtx, A, B: 'static, FnHook, AppFnCtx>(
     f: FnHook,
     fa: AppCtx,
 ) -> <AppCtx as Apply<A>>::Apply<B>
 where
     FnHook: Fn(A) -> B + 'static, // The function A -> B
     // AppFnCtx is the type F<CFn<A,B>>. It must be Applicative itself.
-    AppFnCtx: Applicative<CFn<A, B>, Applicative<CFn<A, B>> = AppFnCtx>,
+    AppFnCtx: Applicative<CFn<A, B>, Applicative<CFn<A, B>> = AppFnCtx> + 'static, // Added 'static bound
     // AppCtx is F<A>. It must be Apply.
     // Its Apply::Functor<F::Fnn<A,B>> must be AppFnCtx (i.e. F<CFn<A,B>>)
     AppCtx: Apply<A, Functor<<AppCtx as Apply<A>>::Fnn<A, B>> = AppFnCtx>,

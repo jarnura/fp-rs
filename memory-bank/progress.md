@@ -7,8 +7,17 @@
     - `Vec<T>`: Functor, Apply, Applicative, Monad traits and laws implemented and tested.
 - **Profunctor Implementation:**
     - `Profunctor`, `Strong`, `Choice` traits and laws implemented and tested for `CFn`.
+- **Identity Monad:**
+    - `Identity<A>` struct implemented in `src/identity.rs`.
+    - `Functor`, `Apply`, `Applicative`, `Monad` traits and laws implemented and tested for `Identity<A>`.
+- **ReaderT Monad Transformer:**
+    - `ReaderT<R, M, A>` struct implemented in `src/transformers/reader.rs`.
+    - `Functor`, `Apply`, `Applicative`, `Monad` traits implemented for `ReaderT` (conditional on inner monad `M`).
+    - `MonadReader<R, A>` trait defined and implemented for `ReaderT`.
+    - Basic unit tests for `ReaderT` functionality and trait implementations added (now located in `tests/transformers/reader_test.rs`).
+    - Successfully debugged and all `ReaderT` related compilation errors and test failures resolved.
 - **Codebase Health:**
-    - All (83 unit + 3 doc) tests passing.
+    - All (7 lib unit tests + 91 integration tests + 28 doc tests = 126 total) tests passing.
     - Code formatted with `cargo fmt`.
     - Linted with `cargo clippy` (no warnings beyond intentionally suppressed ones).
     - All compiler warnings addressed.
@@ -46,9 +55,9 @@
 
 
 ## Current Status
-- **Phase:** Phase 3, Step 3 (Documentation - Final Review).
-- **Focus:** Finalizing documentation, particularly for `experimental_apply.rs`.
-- **Overall Test Status:** 83 unit tests + 3 doc tests passing. Code is clean and formatted. Documentation for core modules added.
+- **Phase:** Phase 3, Step 3 (Documentation - Final Review & ReaderT/Identity Docs).
+- **Focus:** Finalizing documentation, particularly for `experimental_apply.rs`, and adding docs for `ReaderT` and `Identity`.
+- **Overall Test Status:** All 126 tests (lib unit, integration, doc) passing. Code is clean and formatted. Documentation for core modules added. Test organization for `ReaderT` updated.
 
 ## Known Issues
 - `src/experimental_apply.rs` documentation status pending review.
