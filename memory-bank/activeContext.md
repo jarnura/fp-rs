@@ -32,8 +32,8 @@
 
 
 ## Next Steps
-- **Add `rustdoc`:** Comprehensive documentation for `src/transformers/reader.rs` and `src/identity.rs`.
-- **Review `src/experimental_apply.rs`:** Determine if this module should be fully documented as part of the public API, feature-gated, or made private.
+- **Documentation Final Review:** Conduct a general review of all generated `rustdoc` for clarity, consistency, and completeness.
+- **Review `src/experimental_apply.rs` (Lower Priority):** Determine if this module should be fully documented as part of the public API, feature-gated, or made private.
 - **Benchmarking Analysis (Ongoing):**
     - Initial benchmarks for `Functor`, `Apply`, and `Bind` on `Option`, `Result`, and `Vec` have been implemented and run using `criterion.rs`.
     - Performance overhead analysis is underway. See `progress.md` for detailed findings.

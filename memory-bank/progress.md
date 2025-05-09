@@ -25,15 +25,16 @@
     - Core documents established.
     - Archive for historical project data created: [Project History](./archive/project_history_pre_aug_2025.md).
 - **Documentation (Phase 3, Step 3 - Largely Complete):**
-    - Added comprehensive `rustdoc` comments to public items in `functor.rs`, `apply.rs`, `applicative.rs`, `monad.rs`, `function.rs`, `profunctor.rs`, `utils.rs` (macros), and `lib.rs`.
+    - Added comprehensive `rustdoc` comments to public items in `functor.rs`, `apply.rs`, `applicative.rs`, `monad.rs`, `function.rs`, `profunctor.rs`, `utils.rs` (macros), `lib.rs`, `identity.rs`, and `transformers/reader.rs`.
     - `README.md` significantly updated with project overview, features, usage examples, build/test instructions, and benchmark summary.
     - Crate-level documentation linked to `README.md` via `#![doc = include_str!("../README.md")]` in `lib.rs`.
 - For detailed history of completed work, see the [Project History](./archive/project_history_pre_aug_2025.md).
 
 ## What's Left to Build / Planned (Key Priorities)
-- **Phase 3, Step 3: Documentation (Final Review):**
-    - Review `rustdoc` for `src/experimental_apply.rs` and decide on its public API status (document, feature-gate, or privatize).
+- **Phase 3, Step 3: Documentation (Final Review - High Priority):**
     - General review of all generated `rustdoc` for clarity and completeness.
+- **Review `src/experimental_apply.rs` (Lower Priority):**
+    - Decide on its public API status (document, feature-gate, or privatize).
 - **Benchmarking (Initial Analysis Complete, Ongoing):**
     - Benchmarks for `Functor::map`, `Apply::apply`, and `Bind::bind` implemented for `Option`, `Result`, and `Vec` using `criterion.rs`.
     - **`Functor::map` Overhead:**
@@ -62,9 +63,10 @@
 ## Known Issues
 - `src/experimental_apply.rs` documentation status pending review.
 - `src/main.rs` is currently a placeholder.
-- Further refinement of `Vec` benchmarks or implementations could be considered if `Vec` performance is critical.
-- `Apply::apply` overhead, while small, is the most notable among the core operations for `Option` and `Result`.
-- Placeholder metadata (author, URLs) in `Cargo.toml`.
+    - Further refinement of `Vec` benchmarks or implementations could be considered if `Vec` performance is critical.
+    - `Apply::apply` overhead, while small, is the most notable among the core operations for `Option` and `Result`.
+    - Placeholder metadata (author, URLs) in `Cargo.toml`.
+- **`src/experimental_apply.rs` documentation status pending review (Lower Priority).**
 
 ## Evolution of Project Decisions
 - Historical project decisions and their evolution are documented in the [Project History](./archive/project_history_pre_aug_2025.md).
