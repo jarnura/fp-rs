@@ -6,8 +6,11 @@
 // If other `crate::` or `super::` imports were present and used, they'd be adjusted similarly.
 // For example, `use crate::function::CFn;` would become `use fp_rs::function::CFn;`
 
-#[cfg(test)]
-mod tests {
+#[cfg(not(feature = "kind"))]
+mod classic_functor_tests { // Renaming to avoid conflict if an hkt version is added later
+
+    #[cfg(test)]
+    mod tests {
     #[allow(unused_imports)] // Suppress incorrect warning; import needed for .map()
     use fp_rs::Functor; // Restoring import
 
@@ -247,3 +250,5 @@ mod vec_functor_laws {
         assert_eq!(composed_map, vec![5, 5]);
     }
 }
+
+} // Closing for #[cfg(not(feature = "kind"))] mod classic_functor_tests

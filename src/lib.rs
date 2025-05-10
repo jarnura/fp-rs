@@ -9,6 +9,8 @@ pub mod experimental_apply; // Consider if this should be public or feature-gate
 pub mod function;
 pub mod functor;
 pub mod identity; // Added
+#[cfg(feature = "kind")]
+pub mod kind_based;
 pub mod monad;
 pub mod profunctor;
 pub mod transformers; // Added
@@ -18,7 +20,7 @@ pub mod utils;
 pub use applicative::Applicative;
 pub use apply::Apply;
 pub use functor::Functor;
-pub use monad::{Bind, Monad}; // Re-export Monad as well
+pub use monad::{Bind}; // Monad trait is currently commented out in monad.rs
 pub use profunctor::{Choice, Profunctor, Strong};
 pub use transformers::reader::MonadReader; // Added
 
@@ -26,6 +28,9 @@ pub use transformers::reader::MonadReader; // Added
 pub use function::{CFn, CFnOnce};
 pub use identity::Identity; // Added
 pub use transformers::reader::ReaderT; // Added
+
+#[cfg(feature = "kind")]
+pub use kind_based::kind::{CFnHKTMarker, CFnOnceHKTMarker, OptionHKTMarker, VecHKTMarker, ResultHKTMarker};
 // Consider re-exporting the Reader type alias as well:
 // pub use transformers::reader::Reader;
 

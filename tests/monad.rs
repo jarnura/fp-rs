@@ -1,11 +1,16 @@
 // Original content from src/monad.rs test modules
 // with use statements adjusted for the new location.
 
-use fp_rs::monad::{join, Bind}; // bind is also a free function in monad.rs
+// `Bind` trait is used via `fp_rs::Bind` or `fp_rs::monad::hkt::Bind` depending on features.
+// The direct import `use fp_rs::monad::Bind` is not needed when `classic_monad_tests` uses `super::*`
+// or when HKT tests use fully qualified paths.
 // Removed unused fn1 import
 
-#[cfg(test)]
-mod tests {
+#[cfg(not(feature = "kind"))]
+mod classic_monad_tests { // Renaming to avoid conflict if an hkt version is added later
+
+    #[cfg(test)]
+    mod tests {
     // Imports from the top of the file will be in scope
     use super::*; // This brings in Bind, join, bind (fn), Applicative, CFn, fn1, bfn1
 
@@ -466,3 +471,5 @@ mod vec_monad_laws {
         assert_eq!(lhs, Vec::<String>::new());
     }
 }
+
+} // Closing for #[cfg(not(feature = "kind"))] mod classic_monad_tests

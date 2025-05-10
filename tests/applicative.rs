@@ -1,10 +1,9 @@
 // Original content from src/applicative.rs test modules
 // with use statements adjusted for the new location.
 
-use fp_rs::Applicative;
  // For map law test if Functor::map is used directly
 // lift_a1 is defined in src/applicative.rs (and thus in the fp_rs::applicative module)
-use fp_rs::applicative::lift_a1;
+// `Applicative` and `lift_a1` are brought in via `super::*` in nested test modules.
 
 // Re-checking lift_a1 location: it's defined in src/applicative.rs, so it will be fp_rs::applicative::lift_a1
 // However, the test `test_lift_a1` uses `lift_a1` directly after `use super::*;`.
@@ -16,8 +15,14 @@ use fp_rs::applicative::lift_a1;
 // Items from fp_rs (re-exported from lib.rs)
 // Items from fp_rs::module_name (specific modules)
 
-#[cfg(test)]
-mod tests {
+#[cfg(not(feature = "kind"))]
+mod classic_applicative_tests { // Renaming to avoid conflict if an hkt version is added later
+
+    // These imports are now relative to classic_applicative_tests, so super::* refers to the file-level imports
+    use super::*;
+
+    #[cfg(test)]
+    mod tests {
     // Use imports from the top of the file via super::*
     use super::*;
 
@@ -389,3 +394,5 @@ mod vec_applicative_laws {
         assert_eq!(lhs, Vec::<String>::new());
     }
 }
+
+} // Closing for #[cfg(not(feature = "kind"))] mod classic_applicative_tests

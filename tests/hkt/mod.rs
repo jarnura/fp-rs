@@ -1,0 +1,12 @@
+#[cfg(feature = "kind")]
+pub mod monad;
+#[cfg(feature = "kind")]
+pub mod applicative;
+#[cfg(feature = "kind")]
+pub mod identity;
+#[cfg(feature = "kind")]
+pub mod kind;
+#[cfg(feature = "kind")]
+pub mod functor;
+#[cfg(feature = "kind")]
+pub mod transformers;

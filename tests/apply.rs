@@ -5,19 +5,26 @@
 // and Apply, Functor are re-exported from lib.rs.
 // lift2, lift3 are specific to the apply module.
 
+#[allow(unused_imports)] // For lift2, lift3 when kind feature is active
 use fp_rs::apply::{lift2, lift3}; // lift2, lift3 are in the apply module
-use fp_rs::Apply; // Apply is re-exported
+// Apply trait and fn2/fn3 macros are brought in via super::* in the nested modules.
 #[allow(unused_imports)] // Suppress incorrect warning; import needed for .map()
 use fp_rs::Functor; // Functor is re-exported // Restoring import
-use fp_rs::{fn2, fn3}; // Macros are at crate root
 
-#[cfg(test)]
-mod tests {
-    // Use the more specific imports from above
-    use super::*; // This will pull in the fp_rs::... imports from the parent scope of this file
 
-    #[test]
-    fn apply_on_option() {
+#[cfg(not(feature = "kind"))]
+mod classic_apply_tests { // Renaming to avoid conflict if an hkt version is added later
+
+    // These imports are now relative to classic_apply_tests, so super::* refers to the file-level imports
+    use super::*; 
+
+    #[cfg(test)]
+    mod tests {
+        // Use the more specific imports from above
+        use super::*; // This will pull in the fp_rs::... imports from the parent scope of this file
+
+        #[test]
+        fn apply_on_option() {
         let closure = fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
         let some_closure = Some(1).map(closure);
         let none_closure = None.map(closure); // Assuming Functor<A> for Option<A> handles None.map correctly
@@ -33,3 +40,5 @@ mod tests {
         assert_eq!(lift3(closure, Some(1), Some(2), Some(3)), Some(6));
     }
 }
+
+} // Closing for #[cfg(not(feature = "kind"))] mod classic_apply_tests

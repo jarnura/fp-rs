@@ -32,45 +32,47 @@ The library also includes `CFn` and `CFnOnce` wrappers for heap-allocated closur
 
 ## Usage Example
 
-Here's a quick example of using the `Functor` trait with `Option`:
+Here's a quick example of using the `Functor` trait with `Option` (assuming the `kind` feature is enabled for HKTs):
 
 ```rust
-use fp_rs::functor::Functor; // Import the Functor trait
+use fp_rs::{Functor, OptionHKTMarker}; // Import HKT Functor and marker
 
 fn main() {
     let some_value: Option<i32> = Some(10);
-    let mapped_value = <Option<i32> as Functor<i32>>::map(some_value, |x| x * 2);
+    // For HKT, Functor<A,B> is on the marker OptionHKTMarker
+    let mapped_value = OptionHKTMarker::map(some_value, |x| x * 2);
     assert_eq!(mapped_value, Some(20));
 
     let no_value: Option<i32> = None;
-    let mapped_none = <Option<i32> as Functor<i32>>::map(no_value, |x: i32| x * 2);
+    let mapped_none = OptionHKTMarker::map(no_value, |x: i32| x * 2);
     assert_eq!(mapped_none, None);
 }
 ```
 
-And an example using `Bind` (often called `flat_map`):
+And an example using `Bind` (often called `flat_map`), assuming the `kind` feature:
 
 ```rust
-use fp_rs::monad::Bind; // Import the Bind trait
+use fp_rs::{Bind, OptionHKTMarker}; // Import HKT Bind and marker
 
 fn try_parse_and_double(s: &str) -> Option<i32> {
-    s.parse::<i32>().ok().map(|n| n * 2) // Using Option's inherent map
+    s.parse::<i32>().ok().map(|n| n * 2)
 }
 
 fn main() {
     let opt_str: Option<String> = Some("5".to_string());
 
-    // Using UFCS for fp_rs::Bind::bind
-    let result = <Option<String> as Bind<String>>::bind(
+    // For HKT, Bind<A,B> is on the marker OptionHKTMarker
+    // The closure takes String because OptionHKTMarker::Applied<String> is Option<String>
+    let result = OptionHKTMarker::bind(
         opt_str,
-        |st| try_parse_and_double(&st) // Our function A -> F<B>
+        |st: String| try_parse_and_double(&st) // Our function A -> F<B>
     );
     assert_eq!(result, Some(10));
 
     let opt_invalid_str: Option<String> = Some("hello".to_string());
-    let result_invalid = <Option<String> as Bind<String>>::bind(
+    let result_invalid = OptionHKTMarker::bind(
         opt_invalid_str,
-        |st| try_parse_and_double(&st)
+        |st: String| try_parse_and_double(&st)
     );
     assert_eq!(result_invalid, None);
 }

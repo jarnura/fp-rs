@@ -1,57 +1,78 @@
 # Active Context
 
 ## Current Work Focus
-- **Phase 3, Step 3: Comprehensive Documentation (Largely Complete).**
-  - `rustdoc` comments added to core modules: `functor.rs`, `apply.rs`, `applicative.rs`, `monad.rs`, `function.rs`, `profunctor.rs`, `utils.rs`, and `lib.rs`.
-  - `README.md` updated with project overview, features, usage examples, and build/test instructions.
-- **Current Task: Implement `ReaderMonad` (`ReaderT`) (Completed).**
-  - Created `src/identity.rs` with `Identity` monad and its `Functor`, `Apply`, `Applicative`, `Monad` implementations.
-  - Created `src/transformers/reader.rs` with `ReaderT` struct and implementations for `Functor`, `Apply`, `Applicative`, `Monad`, and `MonadReader`.
-  - Integrated new modules into `src/lib.rs` and `src/transformers/mod.rs`.
-  - Successfully debugged compilation errors in `ReaderT` related to trait bounds (`'static`, `Clone`) after refactoring to `Rc<dyn Fn>`.
+The primary effort is refactoring the `fp-rs` Rust library to use a new Higher-Kinded Types (HKT) pattern. This involves:
+- Defining `HKT` and `HKT1` traits in `src/kind_based/kind.rs`.
+- Creating HKT marker types (e.g., `OptionHKTMarker`, `CFnHKTMarker`).
+- Refactoring core functional traits (`Functor`, `Apply`, `Applicative`, `Bind`) into:
+    - `classic` submodules (old style with associated types like `Functor<T>`).
+    - `hkt` submodules (new style with HKT markers and `Self::Applied<T>`).
+- Updating implementations for these traits across various types (`Option`, `Result`, `Vec`, `CFn`, `CFnOnce`, `Identity`, `ReaderT`).
+- The `Monad` trait itself is currently commented out to resolve cyclic dependencies.
 
-## Recent Changes
-- **`ReaderT` Implementation and Debugging:**
-    - Refactored `ReaderT` internal function from `Box<dyn FnMut(R) -> M>` to `Rc<dyn Fn(R) -> M + 'static>`.
-    - Resolved E0276 (impl has stricter requirements) for `ReaderT::apply` by:
-        - Ensuring the `where` clause in `ReaderT::apply` correctly used `Self` for associated types to match the trait: `<Self as Functor<A>>::Functor<<Self as Apply<A>>::Fnn<A, B>>: 'static`.
-        - Adding `B: 'static` to the `Apply::apply` trait definition in `src/apply.rs`, as this was a necessary bound for `ReaderT`'s implementation and consistent for other types.
-    - Propagated `B: 'static` (or `C: 'static`, `D: 'static` as appropriate) bounds to helper functions `lift_a1` (in `src/applicative.rs`), `lift2`, and `lift3` (in `src/apply.rs`) to fix resulting E0310 lifetime errors.
-    - Corrected a failing unit test `test_reader_t_functor_map` by updating an incorrect assertion value.
-    - All tests now pass.
-- **Test Organization:**
-    - Moved inline tests from `src/transformers/reader.rs` to a new integration test file `tests/transformers/reader_test.rs`.
-- **Phase 3, Step 3 (Documentation) Progress:**
-    - Added comprehensive `rustdoc` comments to all public items in `src/functor.rs`, `src/apply.rs`, `src/applicative.rs`, `src/monad.rs`, `src/function.rs`, `src/profunctor.rs`, `src/utils.rs` (macros), and `src/lib.rs` (crate-level docs and re-exports).
-    - Updated `README.md` significantly with detailed project information, feature list, usage examples, and sections on building, testing, and benchmarks.
-- **Phase 3, Step 4 (Final Review & Cleanup) Completed (Previously):**
-    - Codebase formatted, linted, and all compiler/clippy warnings addressed.
-    - E0210 (orphan rule) for `BitOr` on `BindType` resolved by removing the implementation.
-    - `cargo test` confirms 83 unit tests + 3 doc tests passing without warnings (prior to `ReaderT` work).
-- For a detailed history of previous changes and completed phases, see [Project History](./archive/project_history_pre_aug_2025.md).
-
+## Recent Changes & Problem Solving
+- **HKT Core (`kind.rs`, `functor.rs`, `apply.rs`, `applicative.rs`):**
+    - `src/kind_based/kind.rs`: Defined `HKT`, `HKT1` traits.
+    - `src/functor.rs` (`hkt::Functor<A,B>`): Stable with HKT.
+    - `src/apply.rs` (`hkt::Apply<A,B>`): Stable with HKT. Resolved E0308/E0599 by removing incorrect `Fn`/`FnOnce` bounds on `CFn`/`CFnOnce` types in `impl Apply for CFn...Marker`.
+    - `src/applicative.rs` (`hkt::Applicative<T>`): Stable with HKT.
+- **`src/monad.rs` (HKT `Bind` and `Monad` - Phase 6 Completed):**
+    - `hkt::Bind<A,B>` trait defined with `Apply<A,B>` as supertrait. `bind` is a required method, implemented directly for all markers.
+    - `hkt::Monad<A>` trait defined with `Applicative<A>` as supertrait. `join` is a required method, implemented directly for all markers.
+    - Successfully resolved previous E0391 cycle errors related to `Bind`/`Monad` definitions and `join` by:
+        - Making `Monad::join` a required method (no default implementation with `Bind` in its `where` clause).
+        - Simplifying `Bind` supertraits to `Apply<A,B>`.
+        - Ensuring `CFn...Marker` implementations of `Monad::join` call their direct `Bind::bind` methods.
+    - Removed incorrect `Fn`/`FnOnce` bounds from `impl Bind for CFn...Marker` where clauses.
+- **Compilation Status:** `cargo check --features kind --no-default-features` now passes for the entire HKT system up to and including `Monad`.
 
 ## Next Steps
-- **Documentation Final Review:** Conduct a general review of all generated `rustdoc` for clarity, consistency, and completeness.
-- **Review `src/experimental_apply.rs` (Lower Priority):** Determine if this module should be fully documented as part of the public API, feature-gated, or made private.
-- **Benchmarking Analysis (Ongoing):**
-    - Initial benchmarks for `Functor`, `Apply`, and `Bind` on `Option`, `Result`, and `Vec` have been implemented and run using `criterion.rs`.
-    - Performance overhead analysis is underway. See `progress.md` for detailed findings.
-- **Post-Phase 3 Considerations (Lower Priority):**
-    - **`src/main.rs`:** Define purpose (e.g., examples, CLI).
-    - **`Cargo.toml` Metadata:** Update author and URL information when available.
-    - **Revisit `BitOr` for `BindType`:** Consider alternative designs if the operator syntax is desired.
+- **Phase 7: Update `Identity` Monad for HKT (Completed)**
+    - `IdentityHKTMarker` defined in `src/identity.rs`.
+    - `hkt::Functor`, `hkt::Apply`, `hkt::Applicative`, and `hkt::Monad` (including `join`) implemented for `IdentityHKTMarker`.
+    - Tests for these implementations, including `join` and monad laws, are passing under `cargo test --features kind --no-default-features`.
+    - Doc tests in `README.md` updated to reflect HKT usage for `Option` examples.
+    - Obsolete `bfn!` macros and their doc tests in `src/utils.rs` commented out.
+- **Phase 8: Update `ReaderT` Monad Transformer for HKT (Completed)**
+    - `ReaderTHKTMarker` is defined in `src/transformers/reader.rs`.
+    - HKT traits (`Functor`, `Apply`, `Applicative`, `Bind`, `Monad`, `MonadReader`) are implemented for `ReaderTHKTMarker`.
+    - `hkt::Monad` for `ReaderTHKTMarker` is implemented and relevant tests (including some applicative laws involving `ReaderT`) are passing.
+- **Phase 9: Testing (Kind-based) (Current Focus)**
+    - Comprehensive tests for HKT `Monad` for `ReaderT` are complete and passing.
+    - HKT tests for `Option` Monad laws are complete and passing.
+    - HKT tests for `Identity` Monad laws are complete and passing.
+    - Monad law tests for `ResultHKTMarker`, `VecHKTMarker`, `CFnHKTMarker`, and `CFnOnceHKTMarker` are implemented and passing. (Note: For `CFn` and `CFnOnce`, one of the `join` laws related to `pure(m)` is not applicable due to `Clone` constraints or the nature of `FnOnce`.)
+    - **Functor laws for all HKT-enabled types (`Option`, `Result`, `Vec`, `CFn`, `CFnOnce`, `Identity`, `ReaderT`) are comprehensively covered in `tests/hkt/functor.rs` and passing.**
+    - **Applicative laws for `Option`, `Result`, `Identity`, and `Vec` are covered in `tests/hkt/applicative.rs` and passing. For `CFn`, `CFnOnce`, and `ReaderT`, laws involving `pure` with function types are noted as untestable due to `Clone` constraints on `CFn`/`CFnOnce` and the `pure` implementation requiring `T: Clone`.**
+    - Phase 9 (HKT Law Testing) is now considered complete.
+- **Phase 10: Documentation (HKT System) (Current Focus)**
+    - `rustdoc` for `src/applicative.rs` (HKT module) improved with examples and clarifications.
+    - `rustdoc` for `src/monad.rs` (HKT module) improved with examples and clarifications.
+    - `rustdoc` for `src/identity.rs` (HKT module) improved with examples and clarifications.
+    - `rustdoc` for `src/transformers/reader.rs` (HKT module, including `MonadReader` HKT) improved with examples and clarifications.
+    - Update Memory Bank files (`systemPatterns.md`, `techContext.md`) with insights from the HKT refactor and testing (this task).
+    - General review of all generated `rustdoc`.
 
 ## Active Decisions and Considerations
-- **`CFn` Clonability:** Decided against making `CFn` (holding `Box<dyn Fn>`) easily `Clone` due to complexity. Tests requiring multiple uses of the same function now recreate the `CFn` instance. This might need revisiting if it becomes a major ergonomic issue.
-- **Test Module Organization:** Integration tests are now located in the top-level `tests/` directory, mirroring the module structure of `src/`. Law tests remain organized in submodules within these test files.
-- **Warnings:** All compiler and clippy warnings addressed in Phase 3, Step 4. Some potentially incorrect `unused_imports` warnings for necessary trait imports (like `Functor`) in test files were suppressed using `#[allow(unused_imports)]`.
-- **E0210 / Orphan Rule:** The `impl BitOr for BindType` in `src/function.rs` violated the orphan rule and caused an E0210 warning (future error). Decided to remove the implementation for now to resolve the warning. Direct `bind` calls must be used instead.
+- **HKT Simulation:** Using marker traits (`HKT`, `HKT1`) and Generic Associated Types (`type Applied<T>`) as the core HKT strategy. This is now stable through `Monad` for `Option`, `Result`, `Vec`, `CFn...`, and `Identity`.
+- **Feature Flagging:** Using `#[cfg(feature = "kind")]` to manage classic vs. HKT implementations. Test files for classic implementations are now gated with `#[cfg(not(feature = "kind"))]`.
+- **`'static` and `Clone` Bounds:** These remain frequently required.
+- **`Monad` Trait:** Successfully refactored and integrated into the HKT system. `IdentityHKTMarker` now implements it.
+- **`CFn` Clonability:** The existing decision against making `CFn` easily `Clone` persists.
+- **`bfn!` macros:** Commented out due to reliance on obsolete `BindableFn`.
 
 ## Important Patterns and Preferences
-- **Documentation First:** Keeping Memory Bank updated.
-- **Systematic Refinement & Testing:** Core `Option<T>` and `Result<T, E>` implementations verified with law tests.
+- **Documentation First:** Keeping Memory Bank updated with the latest context.
+- **Systematic Refinement & Testing:** Iteratively fixing compilation errors and verifying changes.
+- **HKT Pattern:** The current refactoring revolves around the `HKT`/`HKT1` marker traits and `Self::Applied<T>` GAT.
 
 ## Learnings and Project Insights
-- Key learnings from completed development phases have been archived. See [Project History](./archive/project_history_pre_aug_2025.md) for details.
-- Current focus is on applying best practices for documentation and ensuring the library is easy to understand and use.
+- The HKT refactoring up to `Monad` (including `Identity`) has been a complex but successful undertaking.
+- Ensuring HKT traits are correctly imported into test modules (`use crate::module::hkt::Trait;`) is crucial for E0599 errors.
+- Making `hkt` submodules public (`pub mod hkt`) was necessary for tests in other modules to access HKT traits.
+- Fully qualifying trait calls with the specific HKT marker (e.g., `<Marker as Trait<...>>::method(...)`) is sometimes needed if type inference fails, especially for complex traits like `MonadReader`.
+
+## Known Issues (Post Phase 7)
+- `experimental_apply.rs` and `function.rs` (beyond `CFn`/`CFnOnce`) may still require updates in the context of the HKT refactor.
+- Comprehensive HKT law testing for `ReaderT`'s `Monad` implementation is pending (Phase 9).
+- Unused import warnings persist but are minor.

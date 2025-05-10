@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-use crate::monad::Bind;
 
 /// Type alias for a boxed, dynamically dispatched, repeatable closure.
 /// `BFn<A, B>` is equivalent to `Box<dyn Fn(A) -> B + 'static>`.
@@ -192,6 +191,7 @@ impl<A: 'static, B: 'static, C: 'static> std::ops::Shl<CFnOnce<A, B>> for CFnOnc
     }
 }
 
+/*
 /// A wrapper for a function `A -> M<B>` (a Kleisli arrow) where `M` is a `Monad`.
 ///
 /// This struct wraps a `CFn<A, BindType<M, A, B>>`, where `BindType<M, A, B>`
@@ -267,3 +267,4 @@ where
         BindableFn(CFn::new(f))
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 use crate::{
     function::CFn, // Note: AnyFunction is not needed here
     functor::Functor,
@@ -50,3 +51,4 @@ impl<A, B> MyFancyFunc<A, B> for CFn<A, B> {
         self.0 // Return the inner Box<dyn Fn(A) -> B + 'static>
     }
 }
+*/
