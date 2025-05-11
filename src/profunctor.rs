@@ -282,8 +282,7 @@ pub struct Forget<R, AInput, BPhantom> {
 
 // AInput here is ProfB from Profunctor<ProfB, ProfC>
 // BPhantom here is ProfC from Profunctor<ProfB, ProfC>
-impl<R: 'static, ProfB: 'static, ProfC> Profunctor<ProfB, ProfC> for Forget<R, ProfB, ProfC>
-{
+impl<R: 'static, ProfB: 'static, ProfC> Profunctor<ProfB, ProfC> for Forget<R, ProfB, ProfC> {
     type Pro<NextA, NextC> = Forget<R, NextA, NextC>;
 
     // self: Forget<R, ProfB, ProfC>
@@ -423,7 +422,7 @@ pub fn _1<
     B: 'static,
     C: 'static,
     PA: Strong<A, B, Pro<(A, C), (B, C)> = PS> + 'static, // PA is PInner for A->B
-    PS: Strong<(A, C), (B, C)>, // PS is POuter for (A,C)->(B,C)
+    PS: Strong<(A, C), (B, C)>,                           // PS is POuter for (A,C)->(B,C)
 >() -> Lens<PS, PA, (A, C), (B, C), A, B> {
     Lens(Optic {
         optic: Box::new(Strong::first), // Strong::first transforms PA to PS
@@ -443,7 +442,7 @@ pub fn _2<
     B: 'static,
     C: 'static,
     PA: Strong<A, B, Pro<(C, A), (C, B)> = PS> + 'static, // PA is PInner for A->B
-    PS: Strong<(C, A), (C, B)>, // PS is POuter for (C,A)->(C,B)
+    PS: Strong<(C, A), (C, B)>,                           // PS is POuter for (C,A)->(C,B)
 >() -> Lens<PS, PA, (C, A), (C, B), A, B> {
     Lens(Optic {
         optic: Box::new(Strong::second), // Strong::second transforms PA to PS
@@ -459,9 +458,10 @@ pub fn _2<
 /// possibly with specific profunctor choices in mind that would satisfy the bounds).
 /// Note: This function is not directly used in tests and might be experimental.
 #[allow(dead_code)] // Potentially unused, kept for reference or future use.
-fn _1_new<A: Copy + 'static, BTuple: Copy + 'static, PO, PI>() -> Lens<PO, PI, (A, BTuple), (A, BTuple), A, A>
+fn _1_new<A: Copy + 'static, BTuple: Copy + 'static, PO, PI>(
+) -> Lens<PO, PI, (A, BTuple), (A, BTuple), A, A>
 where
-    PI: Strong<A, A>, // Inner profunctor for A -> A
+    PI: Strong<A, A>,                     // Inner profunctor for A -> A
     PO: Strong<(A, BTuple), (A, BTuple)>, // Outer profunctor for (A,BTuple) -> (A,BTuple)
     // Constraint linking PI.first.dimap to PO
     // The inner profunctor PI operates on A -> A.
@@ -475,8 +475,11 @@ where
     //   Inner A (P_intermediate's input): (A, CFn<A, (A, BTuple)>)
     //   Inner B (P_intermediate's output): (A, CFn<A, (A, BTuple)>)
     // So, P_intermediate must be Profunctor where its Pro<(A,BTuple), (A,BTuple)> = PO.
-    <PI as Profunctor<A, A>>::Pro<(A, CFn<A, (A, BTuple)>), (A, CFn<A, (A, BTuple)>)>:
-        Profunctor<(A, CFn<A, (A, BTuple)>), (A, CFn<A, (A, BTuple)>), Pro<(A, BTuple), (A, BTuple)> = PO>,
+    <PI as Profunctor<A, A>>::Pro<(A, CFn<A, (A, BTuple)>), (A, CFn<A, (A, BTuple)>)>: Profunctor<
+        (A, CFn<A, (A, BTuple)>),
+        (A, CFn<A, (A, BTuple)>),
+        Pro<(A, BTuple), (A, BTuple)> = PO,
+    >,
 {
     lens(
         CFn::new(|(first_val, _second_val): (A, BTuple)| first_val), // Getter: (A,BTuple) -> A
@@ -512,8 +515,12 @@ where
 {
     lens(
         CFn::new(|c: Check| c.key), // Getter: Check -> i8
-        CFn::new(|c: Check| {       // Setter: Check -> (i8_new -> Check_new)
-            CFn::new(move |new_key: i8| Check { key: new_key, other: c.other })
+        CFn::new(|c: Check| {
+            // Setter: Check -> (i8_new -> Check_new)
+            CFn::new(move |new_key: i8| Check {
+                key: new_key,
+                other: c.other,
+            })
         }),
     )
 }

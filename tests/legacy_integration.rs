@@ -26,7 +26,8 @@ mod identity;
 mod monad;
 
 #[cfg(test)]
-#[path = "legacy/transformers/mod.rs"] // Points to the mod file in the legacy transformers directory
+#[path = "legacy/transformers/mod.rs"]
+// Points to the mod file in the legacy transformers directory
 mod transformers;
 // The `mod transformers` above will correctly load `tests/legacy/transformers/mod.rs`,
 // which in turn contains `pub mod reader_test;`. This setup should correctly

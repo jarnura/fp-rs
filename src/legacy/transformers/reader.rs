@@ -1,11 +1,11 @@
 // Content from the original classic module in src/transformers/reader.rs
-use std::marker::PhantomData;
-use std::rc::Rc;
 use crate::legacy::applicative::Applicative;
 use crate::legacy::apply::Apply;
 use crate::legacy::functor::Functor;
-use crate::legacy::identity::Identity; 
+use crate::legacy::identity::Identity;
 use crate::legacy::monad::{Bind, Monad};
+use std::marker::PhantomData;
+use std::rc::Rc;
 
 /// Legacy version of the `ReaderT` monad transformer.
 ///
@@ -125,19 +125,29 @@ where
     M: Monad<A> + 'static,
     A: Clone + 'static,
     <M as Applicative<A>>::Applicative<A>: 'static,
-{}
+{
+}
 
 /// Legacy trait for monads that can access a read-only environment `REnv`.
-pub trait MonadReader<REnv, AVal> where Self: Sized {
+pub trait MonadReader<REnv, AVal>
+where
+    Self: Sized,
+{
     /// The type of `Self` when its value `AVal` is the environment `REnv`.
     /// For `ReaderT<REnv, M, AVal>`, this would be `ReaderT<REnv, M, REnv>`.
     type SelfWithEnvAsValue;
     /// Retrieves the environment `REnv` from the context.
-    fn ask() -> Self::SelfWithEnvAsValue where REnv: Clone + 'static, Self::SelfWithEnvAsValue: Sized;
+    fn ask() -> Self::SelfWithEnvAsValue
+    where
+        REnv: Clone + 'static,
+        Self::SelfWithEnvAsValue: Sized;
     /// Executes a computation in a modified environment.
     /// `map_env_fn` transforms the current environment before running `computation`.
     fn local<FMapEnv>(map_env_fn: FMapEnv, computation: Self) -> Self
-    where REnv: 'static, AVal: 'static, FMapEnv: Fn(REnv) -> REnv + 'static;
+    where
+        REnv: 'static,
+        AVal: 'static,
+        FMapEnv: Fn(REnv) -> REnv + 'static;
 }
 
 impl<R, M, A> MonadReader<R, A> for ReaderT<R, M, A>
@@ -149,11 +159,16 @@ where
     <M as Applicative<R>>::Applicative<R>: 'static,
 {
     type SelfWithEnvAsValue = ReaderT<R, <M as Applicative<R>>::Applicative<R>, R>;
-    fn ask() -> Self::SelfWithEnvAsValue where R: Clone + 'static {
+    fn ask() -> Self::SelfWithEnvAsValue
+    where
+        R: Clone + 'static,
+    {
         ReaderT::new(move |env: R| M::pure(env.clone()))
     }
     fn local<FMapEnv>(map_env_fn: FMapEnv, computation: Self) -> Self
-    where FMapEnv: Fn(R) -> R + 'static {
+    where
+        FMapEnv: Fn(R) -> R + 'static,
+    {
         let computation_run = computation.run_reader_t.clone();
         ReaderT::new(move |current_env: R| {
             let modified_env = map_env_fn(current_env);

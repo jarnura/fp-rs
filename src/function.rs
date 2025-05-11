@@ -1,6 +1,5 @@
 use std::ops::Deref;
 
-
 /// Type alias for a boxed, dynamically dispatched, repeatable closure.
 /// `BFn<A, B>` is equivalent to `Box<dyn Fn(A) -> B + 'static>`.
 /// This represents a heap-allocated closure that can be called multiple times.

@@ -1,7 +1,8 @@
 //! # ReaderT Monad Transformer for the `monadify` library
 // Kind-based version is now default.
 
-pub mod kind { // Renamed from hkt to kind
+pub mod kind {
+    // Renamed from hkt to kind
     //! # Kind-based ReaderT Monad Transformer
     //!
     //! This module provides the Kind-based implementation of the `ReaderT` monad transformer
@@ -98,15 +99,15 @@ pub mod kind { // Renamed from hkt to kind
     //! assert_eq!((joined_reader.run_reader_t)(config1.clone()), IdentityKind::pure("Hello".to_string()));
     //! ```
 
-    use std::marker::PhantomData;
-    use std::rc::Rc;
-    use crate::kind_based::kind::{Kind, Kind1}; // Changed HKT, HKT1 to Kind, Kind1
-    use crate::functor::kind as functor_kind; // Renamed hkt to kind
-    use crate::apply::kind as apply_kind;       // Renamed hkt to kind
     use crate::applicative::kind as applicative_kind; // Renamed hkt to kind
-    use crate::monad::kind as monad_kind;       // Renamed hkt to kind
+    use crate::apply::kind as apply_kind; // Renamed hkt to kind
     use crate::function::CFn; // For Apply's function container type
-    use crate::identity::kind::IdentityKind; // Changed IdentityHKTMarker to IdentityKind
+    use crate::functor::kind as functor_kind; // Renamed hkt to kind
+    use crate::identity::kind::IdentityKind;
+    use crate::kind_based::kind::{Kind, Kind1}; // Changed HKT, HKT1 to Kind, Kind1
+    use crate::monad::kind as monad_kind; // Renamed hkt to kind
+    use std::marker::PhantomData;
+    use std::rc::Rc; // Changed IdentityHKTMarker to IdentityKind
 
     /// The `ReaderT` monad transformer for Kind-encoded types.
     ///
@@ -124,7 +125,8 @@ pub mod kind { // Renamed from hkt to kind
     ///   It must implement [`Kind1`].
     /// - `A`: The type of the value produced by the computation within the inner monad.
     #[derive(Clone)]
-    pub struct ReaderT<R, MKind: Kind1, A> { // Changed MMarker to MKind, HKT1 to Kind1
+    pub struct ReaderT<R, MKind: Kind1, A> {
+        // Changed MMarker to MKind, HKT1 to Kind1
         /// The core function that defines the `ReaderT` computation.
         /// It takes an environment `R` and returns the result wrapped in the inner monad `MKind::Of<A>`.
         pub run_reader_t: Rc<dyn Fn(R) -> MKind::Of<A> + 'static>, // Changed MMarker::Applied to MKind::Of
@@ -133,7 +135,8 @@ pub mod kind { // Renamed from hkt to kind
         _phantom_a: PhantomData<A>,
     }
 
-    impl<R, MKind: Kind1, A> ReaderT<R, MKind, A> { // Changed MMarker to MKind, HKT1 to Kind1
+    impl<R, MKind: Kind1, A> ReaderT<R, MKind, A> {
+        // Changed MMarker to MKind, HKT1 to Kind1
         /// Creates a new `ReaderT` from a function `R -> MKind::Of<A>`.
         pub fn new<F>(f: F) -> Self
         where
@@ -159,7 +162,8 @@ pub mod kind { // Renamed from hkt to kind
     #[derive(Default)]
     pub struct ReaderTKind<R, MKind: Kind1>(PhantomData<(R, MKind)>); // Renamed ReaderTHKTMarker, MMarker to MKind, HKT1 to Kind1
 
-    impl<R, MKind: Kind1> Kind for ReaderTKind<R, MKind> { // Renamed ReaderTHKTMarker, MMarker to MKind, HKT to Kind, HKT1 to Kind1
+    impl<R, MKind: Kind1> Kind for ReaderTKind<R, MKind> {
+        // Renamed ReaderTHKTMarker, MMarker to MKind, HKT to Kind, HKT1 to Kind1
         type Of<A> = ReaderT<R, MKind, A>; // Changed Applied to Of
     }
     // Kind1 is implemented by the blanket impl in kind_based/kind.rs for types that impl Kind.
@@ -171,7 +175,8 @@ pub mod kind { // Renamed from hkt to kind
 
     // --- Kind Trait Implementations for ReaderTKind ---
 
-    impl<R, MKind, A, B> functor_kind::Functor<A, B> for ReaderTKind<R, MKind> // Renamed ReaderTHKTMarker, MMarker to MKind
+    impl<R, MKind, A, B> functor_kind::Functor<A, B> for ReaderTKind<R, MKind>
+    // Renamed ReaderTHKTMarker, MMarker to MKind
     where
         R: Clone + 'static,
         MKind: functor_kind::Functor<A, B> + Kind1 + 'static, // Inner MKind must be Functor. HKT1 to Kind1
@@ -182,7 +187,10 @@ pub mod kind { // Renamed from hkt to kind
     {
         /// Maps a function `A -> B` over the value within the `ReaderT` context.
         /// The environment `R` is passed through. The mapping happens within the inner monad `MKind`.
-        fn map(input: ReaderT<R, MKind, A>, func: impl FnMut(A) -> B + Clone + 'static) -> ReaderT<R, MKind, B> {
+        fn map(
+            input: ReaderT<R, MKind, A>,
+            func: impl FnMut(A) -> B + Clone + 'static,
+        ) -> ReaderT<R, MKind, B> {
             let run_reader_t_clone = input.run_reader_t.clone();
             ReaderT::new(move |env: R| {
                 let m_val: MKind::Of<A> = run_reader_t_clone(env); // Applied to Of
@@ -191,14 +199,15 @@ pub mod kind { // Renamed from hkt to kind
         }
     }
 
-    impl<R, MKind, A, B> apply_kind::Apply<A, B> for ReaderTKind<R, MKind> // Renamed ReaderTHKTMarker, MMarker to MKind
+    impl<R, MKind, A, B> apply_kind::Apply<A, B> for ReaderTKind<R, MKind>
+    // Renamed ReaderTHKTMarker, MMarker to MKind
     where
         R: Clone + 'static,
         MKind: apply_kind::Apply<A, B> + Kind1 + 'static, // Inner MKind must be Apply. HKT1 to Kind1
         A: 'static,
         B: 'static,
-        MKind::Of<A>: 'static, // M<A>. Applied to Of
-        MKind::Of<B>: 'static, // M<B>. Applied to Of
+        MKind::Of<A>: 'static,         // M<A>. Applied to Of
+        MKind::Of<B>: 'static,         // M<B>. Applied to Of
         MKind::Of<CFn<A, B>>: 'static, // M<CFn<A,B>>. Applied to Of
     {
         /// Applies a wrapped function within `ReaderT` to a wrapped value within `ReaderT`.
@@ -217,12 +226,13 @@ pub mod kind { // Renamed from hkt to kind
         }
     }
 
-    impl<R, MKind, T> applicative_kind::Applicative<T> for ReaderTKind<R, MKind> // Renamed ReaderTHKTMarker, MMarker to MKind
+    impl<R, MKind, T> applicative_kind::Applicative<T> for ReaderTKind<R, MKind>
+    // Renamed ReaderTHKTMarker, MMarker to MKind
     where
         R: Clone + 'static, // Though _env is not used, new needs Fn(R)
         MKind: applicative_kind::Applicative<T> + Kind1 + 'static, // Inner MKind must be Applicative. HKT1 to Kind1
-        T: Clone + 'static, // For MKind::pure(value.clone())
-        MKind::Of<T>: 'static, // M<T>. Applied to Of
+        T: Clone + 'static,                                        // For MKind::pure(value.clone())
+        MKind::Of<T>: 'static,                                     // M<T>. Applied to Of
     {
         /// Lifts a value `T` into the `ReaderT` context.
         /// The resulting computation ignores the environment and returns `MKind::pure(value)`.
@@ -231,7 +241,8 @@ pub mod kind { // Renamed from hkt to kind
         }
     }
 
-    impl<R, MKind, A, B> monad_kind::Bind<A, B> for ReaderTKind<R, MKind> // Renamed ReaderTHKTMarker, MMarker to MKind
+    impl<R, MKind, A, B> monad_kind::Bind<A, B> for ReaderTKind<R, MKind>
+    // Renamed ReaderTHKTMarker, MMarker to MKind
     where
         R: Clone + 'static,
         MKind: monad_kind::Bind<A, B> + Kind1 + 'static, // Inner MKind must be Bind. HKT1 to Kind1
@@ -243,7 +254,10 @@ pub mod kind { // Renamed from hkt to kind
         /// Sequentially composes a `ReaderT` computation with a function that returns a new `ReaderT`.
         /// The environment `R` is passed to both the initial computation and the one produced by `func`.
         /// The `bind` operation itself is delegated to the inner monad `MKind`.
-        fn bind(input: ReaderT<R, MKind, A>, func: impl FnMut(A) -> ReaderT<R, MKind, B> + Clone + 'static) -> ReaderT<R, MKind, B> {
+        fn bind(
+            input: ReaderT<R, MKind, A>,
+            func: impl FnMut(A) -> ReaderT<R, MKind, B> + Clone + 'static,
+        ) -> ReaderT<R, MKind, B> {
             let self_run = input.run_reader_t.clone();
             ReaderT::new(move |env: R| {
                 let m_a_val: MKind::Of<A> = self_run(env.clone()); // Applied to Of
@@ -260,14 +274,15 @@ pub mod kind { // Renamed from hkt to kind
         }
     }
 
-    impl<R, MKind, A> monad_kind::Monad<A> for ReaderTKind<R, MKind> // Renamed ReaderTHKTMarker, MMarker to MKind
+    impl<R, MKind, A> monad_kind::Monad<A> for ReaderTKind<R, MKind>
+    // Renamed ReaderTHKTMarker, MMarker to MKind
     where
         R: Clone + 'static,
         MKind: applicative_kind::Applicative<A> // For ReaderTKind's Monad<A> supertrait Applicative<A>
-                 + monad_kind::Bind<ReaderT<R, MKind, A>, A> // For the join implementation
-                 + Kind1 // HKT1 to Kind1
-                 + 'static,
-        A: Clone + 'static, // From Applicative<A> constraint on ReaderTKind
+            + monad_kind::Bind<ReaderT<R, MKind, A>, A> // For the join implementation
+            + Kind1 // HKT1 to Kind1
+            + 'static,
+        A: Clone + 'static,    // From Applicative<A> constraint on ReaderTKind
         MKind::Of<A>: 'static, // M<A>. Applied to Of
         MKind::Of<ReaderT<R, MKind, A>>: 'static, // M<ReaderT<R,M,A>>. Applied to Of
     {
@@ -300,9 +315,9 @@ pub mod kind { // Renamed from hkt to kind
     ///
     /// This Kind-based version is specific to `ReaderT`. A more general `MonadReader` might be
     /// generic over `Self` directly if `Self` is the Kind marker of the reader-like monad.
-    pub trait MonadReader<REnv, AVal, MKind: Kind1> // Changed MMarker to MKind, HKT1 to Kind1
+    pub trait MonadReader<REnv, AVal, MKind: Kind1>
     where
-        Self: Sized, // The Kind marker implementing this trait, e.g., ReaderTKind<REnv, MKind>
+        Self: Sized,
     {
         /// Retrieves the environment `REnv` from the context.
         ///
@@ -375,12 +390,13 @@ pub mod kind { // Renamed from hkt to kind
             FMapEnv: Fn(REnv) -> REnv + 'static;
     }
 
-    impl<R, MKindImpl, A> MonadReader<R, A, MKindImpl> for ReaderTKind<R, MKindImpl> // Renamed ReaderTHKTMarker, MMarkerImpl to MKindImpl
+    impl<R, MKindImpl, A> MonadReader<R, A, MKindImpl> for ReaderTKind<R, MKindImpl>
+    // Renamed ReaderTHKTMarker, MMarkerImpl to MKindImpl
     where
         R: 'static,
         A: 'static,
         MKindImpl: Kind1 + 'static, // MKindImpl is the Kind marker for the inner monad. HKT1 to Kind1
-        MKindImpl::Of<A>: 'static, // M<A>. Applied to Of
+        MKindImpl::Of<A>: 'static,  // M<A>. Applied to Of
     {
         fn ask() -> ReaderT<R, MKindImpl, R>
         where
@@ -407,6 +423,5 @@ pub mod kind { // Renamed from hkt to kind
     }
 }
 
-
 // Directly export Kind-based versions
-pub use kind::{ReaderT, Reader, ReaderTKind, MonadReader}; // Renamed ReaderTHKTMarker
+pub use kind::{MonadReader, Reader, ReaderT, ReaderTKind}; // Renamed ReaderTHKTMarker

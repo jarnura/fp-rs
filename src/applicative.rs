@@ -1,4 +1,5 @@
-pub mod kind { // Renamed from hkt to kind
+pub mod kind {
+    // Renamed from hkt to kind
     //! # Kind-based Applicative Functor for the `monadify` library
     //!
     //! This module defines the `Applicative` trait for Kind-encoded types, which extends `Apply`.
@@ -44,7 +45,7 @@ pub mod kind { // Renamed from hkt to kind
     use crate::apply::kind::Apply; // Kind-based Apply
     use crate::function::{CFn, CFnOnce};
     use crate::kind_based::kind::{
-        Kind, Kind1, OptionKind, ResultKind, VecKind, CFnKind, CFnOnceKind
+        CFnKind, CFnOnceKind, Kind, Kind1, OptionKind, ResultKind, VecKind,
     };
 
     /// Represents a Kind-encoded type that is an Applicative Functor.
@@ -98,37 +99,44 @@ pub mod kind { // Renamed from hkt to kind
         fn pure(value: T) -> Self::Of<T>; // Changed Applied to Of
     }
 
-    impl<T: 'static> Applicative<T> for OptionKind { // Changed OptionHKTMarker to OptionKind
+    impl<T: 'static> Applicative<T> for OptionKind {
+        // Changed OptionHKTMarker to OptionKind
         /// Lifts a value `T` into [`Some(T)`].
-        fn pure(value: T) -> Self::Of<T> { // Self::Of<T> is Option<T>
+        fn pure(value: T) -> Self::Of<T> {
+            // Self::Of<T> is Option<T>
             Some(value)
         }
     }
 
-    impl<T: 'static, E: 'static + Clone> Applicative<T> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
+    impl<T: 'static, E: 'static + Clone> Applicative<T> for ResultKind<E> {
+        // Changed ResultHKTMarker to ResultKind
         /// Lifts a value `T` into [`Ok(T)`].
-        fn pure(value: T) -> Self::Of<T> { // Self::Of<T> is Result<T, E>
+        fn pure(value: T) -> Self::Of<T> {
+            // Self::Of<T> is Result<T, E>
             Ok(value)
         }
     }
 
-    impl<T: 'static + Clone> Applicative<T> for VecKind { // Changed VecHKTMarker to VecKind
+    impl<T: 'static + Clone> Applicative<T> for VecKind {
+        // Changed VecHKTMarker to VecKind
         /// Lifts a value `T` into `vec![T]`.
         ///
         /// The `T: Clone` bound on this `impl` block is due to `Vec`'s `pure`
         /// creating a new vector with the element.
-        fn pure(value: T) -> Self::Of<T> { // Self::Of<T> is Vec<T>
+        fn pure(value: T) -> Self::Of<T> {
+            // Self::Of<T> is Vec<T>
             vec![value]
         }
     }
 
     // Applicative for CFnKind
     // Lifts a value `T` into `CFn<X, T>` which always returns `value.clone()`
-    impl<X, T> Applicative<T> for CFnKind<X> // Changed CFnHKTMarker to CFnKind
+    impl<X, T> Applicative<T> for CFnKind<X>
+    // Changed CFnHKTMarker to CFnKind
     where
         X: 'static,
-        T: 'static + Clone, // T needs to be Clone for the closure
-        Self: Apply<T,T>, // Ensure Apply<T,T> for CFnKind<X> is defined
+        T: 'static + Clone,            // T needs to be Clone for the closure
+        Self: Apply<T, T>,             // Ensure Apply<T,T> for CFnKind<X> is defined
         Self: Kind<Of<T> = CFn<X, T>>, // Changed HKT to Kind, Applied to Of
     {
         /// Lifts a value `T` into a `CFn<X, T>` (a function `X -> T`).
@@ -137,7 +145,8 @@ pub mod kind { // Renamed from hkt to kind
         /// will ignore that input and always return a clone of the original `value`.
         ///
         /// Requires `T: Clone` because the lifted value is cloned by the returned function.
-        fn pure(value: T) -> Self::Of<T> { // Changed Applied to Of
+        fn pure(value: T) -> Self::Of<T> {
+            // Changed Applied to Of
             // Self::Of<T> is CFn<X, T> as per Kind1 impl for CFnKind
             CFn::new(move |_x: X| value.clone())
         }
@@ -145,11 +154,12 @@ pub mod kind { // Renamed from hkt to kind
 
     // Applicative for CFnOnceKind
     // Lifts a value `T` into `CFnOnce<X, T>`
-    impl<X, T> Applicative<T> for CFnOnceKind<X> // Changed CFnOnceHKTMarker to CFnOnceKind
+    impl<X, T> Applicative<T> for CFnOnceKind<X>
+    // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         X: 'static,
         T: 'static + Clone,
-        Self: Apply<T,T>,
+        Self: Apply<T, T>,
         Self: Kind<Of<T> = CFnOnce<X, T>>, // Changed HKT to Kind, Applied to Of
     {
         /// Lifts a value `T` into a `CFnOnce<X, T>` (a function `X -> T` called once).
@@ -158,7 +168,8 @@ pub mod kind { // Renamed from hkt to kind
         /// will ignore that input and return a clone of the original `value`.
         ///
         /// Requires `T: Clone` as the lifted value is cloned by the returned function.
-        fn pure(value: T) -> Self::Of<T> { // Changed Applied to Of
+        fn pure(value: T) -> Self::Of<T> {
+            // Changed Applied to Of
             // Self::Of<T> is CFnOnce<X, T> as per Kind1 impl for CFnOnceKind
             CFnOnce::new(move |_x: X| value.clone())
         }
@@ -209,7 +220,8 @@ pub mod kind { // Renamed from hkt to kind
     pub fn lift_a1<F, A, B, FuncImpl>(
         func: FuncImpl,
         fa: F::Of<A>, // Changed Applied to Of
-    ) -> F::Of<B>     // Changed Applied to Of
+    ) -> F::Of<B>
+    // Changed Applied to Of
     where
         F: Applicative<CFn<A, B>> + Apply<A, B> + Kind1, // Changed HKT1 to Kind1
         FuncImpl: Fn(A) -> B + 'static,

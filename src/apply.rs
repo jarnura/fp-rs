@@ -1,4 +1,5 @@
-pub mod kind { // Renamed from hkt to kind
+pub mod kind {
+    // Renamed from hkt to kind
     //! # Kind-based Apply for the `monadify` library
     //!
     //! This module defines the `Apply` trait for Kind-encoded types, which extends `Functor`.
@@ -14,9 +15,9 @@ pub mod kind { // Renamed from hkt to kind
     //! - `B`: The output type of the function `A -> B` and the type of value in `Self::Of<B>`.
 
     use crate::function::{CFn, CFnOnce};
-    use crate::functor::{Functor}; // Kind-based Functor
+    use crate::functor::Functor; // Kind-based Functor
     use crate::kind_based::kind::{
-        Kind, Kind1, OptionKind, VecKind, ResultKind, CFnKind, CFnOnceKind
+        CFnKind, CFnOnceKind, Kind, Kind1, OptionKind, ResultKind, VecKind,
     };
 
     /// Represents a Kind-encoded type that can apply a wrapped function to a wrapped value.
@@ -56,34 +57,40 @@ pub mod kind { // Renamed from hkt to kind
         /// # Returns
         /// A new Kind-structured value `Self::Of<B>`.
         fn apply(
-            value_container: Self::Of<A>,       // Changed Applied to Of
+            value_container: Self::Of<A>,            // Changed Applied to Of
             function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
-        ) -> Self::Of<B>;                        // Changed Applied to Of
+        ) -> Self::Of<B>; // Changed Applied to Of
     }
 
-    impl<A: 'static, B: 'static> Apply<A, B> for OptionKind { // Changed OptionHKTMarker to OptionKind
+    impl<A: 'static, B: 'static> Apply<A, B> for OptionKind {
+        // Changed OptionHKTMarker to OptionKind
         fn apply(
-            value_container: Self::Of<A>,       // Changed Applied to Of
+            value_container: Self::Of<A>,            // Changed Applied to Of
             function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
-        ) -> Self::Of<B> {                        // Changed Applied to Of
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             value_container.and_then(|val_a| function_container.map(|func_ab| func_ab.call(val_a)))
         }
     }
 
-    impl<A: 'static, B: 'static, E: 'static + Clone> Apply<A, B> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
+    impl<A: 'static, B: 'static, E: 'static + Clone> Apply<A, B> for ResultKind<E> {
+        // Changed ResultHKTMarker to ResultKind
         fn apply(
-            value_container: Self::Of<A>,       // Changed Applied to Of
+            value_container: Self::Of<A>,            // Changed Applied to Of
             function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
-        ) -> Self::Of<B> {                        // Changed Applied to Of
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             value_container.and_then(|val_a| function_container.map(|func_ab| func_ab.call(val_a)))
         }
     }
 
-    impl<A: 'static + Clone, B: 'static> Apply<A, B> for VecKind { // Changed VecHKTMarker to VecKind
+    impl<A: 'static + Clone, B: 'static> Apply<A, B> for VecKind {
+        // Changed VecHKTMarker to VecKind
         fn apply(
-            value_container: Self::Of<A>,       // Changed Applied to Of
+            value_container: Self::Of<A>,            // Changed Applied to Of
             function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
-        ) -> Self::Of<B> {                        // Changed Applied to Of
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             function_container
                 .into_iter()
                 .flat_map(|f_fn| {
@@ -94,30 +101,32 @@ pub mod kind { // Renamed from hkt to kind
                 .collect()
         }
     }
-    
+
     // Apply for CFnKind<X>
     // F::Of<A> is CFn<X, A>
     // F::Of<CFn<A, B>> is CFn<X, CFn<A, B>>
     // Result is CFn<X, B>
     // This implements S f g x = (f x) (g x)
-    impl<X, A, B> Apply<A, B> for CFnKind<X> // Changed CFnHKTMarker to CFnKind
+    impl<X, A, B> Apply<A, B> for CFnKind<X>
+    // Changed CFnHKTMarker to CFnKind
     where
         X: 'static + Clone, // Clone for x_val in the closure
         A: 'static,
         B: 'static,
-        Self: Functor<A, B>, // Ensure Functor constraint is met
+        Self: Functor<A, B>,           // Ensure Functor constraint is met
         Self: Kind<Of<A> = CFn<X, A>>, // HKT -> Kind, Applied -> Of
         Self: Kind<Of<CFn<A, B>> = CFn<X, CFn<A, B>>>, // HKT -> Kind, Applied -> Of
         Self: Kind<Of<B> = CFn<X, B>>, // HKT -> Kind, Applied -> Of
-        // Removed: CFn<X, CFn<A, B>>: Fn(X) -> CFn<A, B>,
-        // Removed: CFn<X, A>: Fn(X) -> A,
-        // The .call method on CFn struct does not require CFn itself to be Fn.
-        // A: 'static is from Apply trait. X: 'static + Clone for closure. B: 'static from Apply trait.
+                                       // Removed: CFn<X, CFn<A, B>>: Fn(X) -> CFn<A, B>,
+                                       // Removed: CFn<X, A>: Fn(X) -> A,
+                                       // The .call method on CFn struct does not require CFn itself to be Fn.
+                                       // A: 'static is from Apply trait. X: 'static + Clone for closure. B: 'static from Apply trait.
     {
         fn apply(
-            value_container: Self::Of<A>, // This is c_x_a. Applied -> Of
+            value_container: Self::Of<A>,            // This is c_x_a. Applied -> Of
             function_container: Self::Of<CFn<A, B>>, // This is c_x_fab. Applied -> Of
-        ) -> Self::Of<B> { // Applied -> Of
+        ) -> Self::Of<B> {
+            // Applied -> Of
             // Self::Of<A> is CFn<X, A>
             // Self::Of<CFn<A, B>> is CFn<X, CFn<A, B>>
             CFn::new(move |x_val: X| {
@@ -130,7 +139,8 @@ pub mod kind { // Renamed from hkt to kind
 
     // Apply for CFnOnceKind<X>
     // Similar to CFnKind, but uses call_once and produces CFnOnce
-    impl<X, A, B> Apply<A, B> for CFnOnceKind<X> // Changed CFnOnceHKTMarker to CFnOnceKind
+    impl<X, A, B> Apply<A, B> for CFnOnceKind<X>
+    // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         X: 'static + Clone, // Clone for x_val in the closure
         A: 'static,
@@ -139,22 +149,22 @@ pub mod kind { // Renamed from hkt to kind
         Self: Kind<Of<A> = CFnOnce<X, A>>, // HKT -> Kind, Applied -> Of
         Self: Kind<Of<CFn<A, B>> = CFnOnce<X, CFn<A, B>>>, // HKT -> Kind, Applied -> Of
         Self: Kind<Of<B> = CFnOnce<X, B>>, // HKT -> Kind, Applied -> Of
-        // Comments about FnOnce bounds and GATs remain relevant.
+                                           // Comments about FnOnce bounds and GATs remain relevant.
     {
         fn apply(
-            value_container: Self::Of<A>, // CFnOnce<X,A>. Applied -> Of
+            value_container: Self::Of<A>,            // CFnOnce<X,A>. Applied -> Of
             function_container: Self::Of<CFn<A, B>>, // CFnOnce<X, CFn<A,B>>. Applied -> Of
-        ) -> Self::Of<B> { // CFnOnce<X,B>. Applied -> Of
+        ) -> Self::Of<B> {
+            // CFnOnce<X,B>. Applied -> Of
             CFnOnce::new(move |x_val: X| {
                 // Self::Of<CFn<A,B>> is CFnOnce<X, CFn<A,B>>
                 // Self::Of<A> is CFnOnce<X,A>
                 let func_ab = function_container.call_once(x_val.clone()); // func_ab is CFn<A,B>
-                let val_a = value_container.call_once(x_val);             // val_a is A
+                let val_a = value_container.call_once(x_val); // val_a is A
                 func_ab.call(val_a)
             })
         }
     }
-
 
     /// Lifts a binary curried function to operate on Kind-encoded contexts.
     ///
@@ -165,11 +175,14 @@ pub mod kind { // Renamed from hkt to kind
         func: FuncImpl, // A -> CFn<B, C>
         fa: F::Of<A>,   // Changed Applied to Of
         fb: F::Of<B>,   // Changed Applied to Of
-    ) -> F::Of<C>       // Changed Applied to Of
+    ) -> F::Of<C>
+    // Changed Applied to Of
     where
         F: Apply<B, C> + Functor<A, CFn<B, C>> + Kind1, // Changed HKT1 to Kind1
         FuncImpl: Fn(A) -> CFn<B, C> + Clone + 'static,
-        A: 'static, B: 'static, C: 'static,
+        A: 'static,
+        B: 'static,
+        C: 'static,
     {
         let f_b_to_c_in_f = F::map(fa, func);
         F::apply(fb, f_b_to_c_in_f)
@@ -184,18 +197,19 @@ pub mod kind { // Renamed from hkt to kind
         fa: F::Of<A>,   // Changed Applied to Of
         fb: F::Of<B>,   // Changed Applied to Of
         fc: F::Of<C>,   // Changed Applied to Of
-    ) -> F::Of<D>       // Changed Applied to Of
+    ) -> F::Of<D>
+    // Changed Applied to Of
     where
-        F: Apply<C, D>
-           + Apply<B, CFn<C,D>>
-           + Functor<A, CFn<B, CFn<C,D>>>
-           + Kind1, // Changed HKT1 to Kind1
+        F: Apply<C, D> + Apply<B, CFn<C, D>> + Functor<A, CFn<B, CFn<C, D>>> + Kind1, // Changed HKT1 to Kind1
         FuncImpl: Fn(A) -> CFn<B, CFn<C, D>> + Clone + 'static,
-        A: 'static, B: 'static, C: 'static, D: 'static,
+        A: 'static,
+        B: 'static,
+        C: 'static,
+        D: 'static,
     {
         let f_b_to_c_to_d_in_f = F::map(fa, func);
-        let f_c_to_d_in_f = <F as Apply<B, CFn<C,D>>>::apply(fb, f_b_to_c_to_d_in_f);
-        <F as Apply<C,D>>::apply(fc, f_c_to_d_in_f)
+        let f_c_to_d_in_f = <F as Apply<B, CFn<C, D>>>::apply(fb, f_b_to_c_to_d_in_f);
+        <F as Apply<C, D>>::apply(fc, f_c_to_d_in_f)
     }
 
     /// Combines two Kind-encoded actions, keeping only the result of the first.
@@ -203,7 +217,8 @@ pub mod kind { // Renamed from hkt to kind
     pub fn apply_first<F, A, B>(
         fa: F::Of<A>, // Changed Applied to Of
         fb: F::Of<B>, // Changed Applied to Of
-    ) -> F::Of<A>     // Changed Applied to Of
+    ) -> F::Of<A>
+    // Changed Applied to Of
     where
         F: Apply<B, A> + Functor<A, CFn<B, A>> + Kind1, // Changed HKT1 to Kind1
         A: Copy + 'static,
@@ -218,7 +233,8 @@ pub mod kind { // Renamed from hkt to kind
     pub fn apply_second<F, A, B>(
         fa: F::Of<A>, // Changed Applied to Of
         fb: F::Of<B>, // Changed Applied to Of
-    ) -> F::Of<B>     // Changed Applied to Of
+    ) -> F::Of<B>
+    // Changed Applied to Of
     where
         F: Apply<B, B> + Functor<A, CFn<B, B>> + Kind1, // Changed HKT1 to Kind1
         A: 'static,

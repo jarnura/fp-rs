@@ -4,7 +4,6 @@
 
 // Module declarations
 
-
 /// Provides the Kind-based `Applicative` trait and its implementations for the `monadify` library.
 pub mod applicative;
 /// Provides the Kind-based `Apply` trait (an extension of `Functor`) and its implementations.
@@ -34,26 +33,30 @@ pub mod legacy;
 
 // Public re-exports of core traits (now default to Kind-based versions)
 pub use applicative::Applicative; // Points to applicative::kind::Applicative
-pub use apply::Apply;             // Points to apply::kind::Apply
-pub use functor::Functor;         // Points to functor::kind::Functor
-pub use monad::{Bind, Monad};     // Points to monad::kind::Bind and monad::kind::Monad
+pub use apply::Apply; // Points to apply::kind::Apply
+pub use functor::Functor; // Points to functor::kind::Functor
+pub use monad::{Bind, Monad}; // Points to monad::kind::Bind and monad::kind::Monad
 pub use profunctor::{Choice, Profunctor, Strong};
 pub use transformers::reader::MonadReader; // Points to transformers::reader::kind::MonadReader
 
 // Public re-exports of key structs/types (optional, but can be convenient)
 pub use function::{CFn, CFnOnce};
 pub use identity::Identity; // Points to identity::kind::Identity
-pub use transformers::reader::{ReaderT, Reader}; // Points to transformers::reader::kind::ReaderT etc.
+pub use transformers::reader::{Reader, ReaderT}; // Points to transformers::reader::kind::ReaderT etc.
 
 // Re-export Kind markers and core Kind traits by default
-pub use kind_based::kind::{
-    Kind, Kind1, // Core Kind traits
-    OptionKind, ResultKind, VecKind,
-    CFnKind, CFnOnceKind
-};
 pub use crate::identity::IdentityKind; // Changed from IdentityHKTMarker
-pub use crate::transformers::reader::ReaderTKind; // Changed from ReaderTHKTMarker
-// Reader alias is re-exported above.
+pub use crate::transformers::reader::ReaderTKind;
+pub use kind_based::kind::{
+    CFnKind,
+    CFnOnceKind,
+    Kind,
+    Kind1, // Core Kind traits
+    OptionKind,
+    ResultKind,
+    VecKind,
+}; // Changed from ReaderTHKTMarker
+   // Reader alias is re-exported above.
 
 // Note on macros:
 // Macros defined with `#[macro_export]` in submodules (like `utils.rs`) are

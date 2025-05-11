@@ -63,10 +63,7 @@ impl<A: 'static + Clone> Apply<A> for Vec<A> {
         Self: Sized,
     {
         fs.into_iter()
-            .flat_map(|f_fn| {
-                self.iter()
-                    .map(move |val_a| f_fn.call(val_a.clone()))
-            })
+            .flat_map(|f_fn| self.iter().map(move |val_a| f_fn.call(val_a.clone())))
             .collect()
     }
 }
@@ -75,11 +72,7 @@ impl<A: 'static + Clone> Apply<A> for Vec<A> {
 ///
 /// Given `func: A -> (B -> C)`, `fa: F<A>`, `fb: F<B>`, produces `F<C>`.
 /// This is a common helper for `Apply` types.
-pub fn lift2<A, B, C: 'static, A2B2C, FB2C: 'static, FA, FB, FC>(
-    func: A2B2C,
-    fa: FA,
-    fb: FB,
-) -> FC
+pub fn lift2<A, B, C: 'static, A2B2C, FB2C: 'static, FA, FB, FC>(func: A2B2C, fa: FA, fb: FB) -> FC
 where
     A2B2C: Fn(A) -> CFn<B, C> + Clone + 'static,
     FA: Functor<A, Functor<CFn<B, C>> = FB2C>,
@@ -145,10 +138,7 @@ where
 /// This is often called "apply second" or "preceded by".
 ///
 /// `apply_second(fa, fb)` is equivalent to `lift2(|_a| |b| b, fa, fb)`.
-pub fn apply_second<A, B, FA, FB, FMapResult, ResultApplyB>(
-    fa: FA,
-    fb: FB,
-) -> ResultApplyB
+pub fn apply_second<A, B, FA, FB, FMapResult, ResultApplyB>(fa: FA, fb: FB) -> ResultApplyB
 where
     A: 'static,
     B: 'static,

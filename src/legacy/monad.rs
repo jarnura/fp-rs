@@ -1,6 +1,6 @@
 // Content from the original classic module in src/monad.rs
 use crate::legacy::applicative::Applicative; // Point to legacy Applicative
-use crate::legacy::apply::Apply;             // Point to legacy Apply
+use crate::legacy::apply::Apply; // Point to legacy Apply
 
 /// Legacy version of the `Monad` trait.
 ///
@@ -82,8 +82,8 @@ where
 pub fn join<A, M, MM>(mma: MM) -> M
 where
     M: Bind<A, Bind<A> = M> + 'static, // M is the inner monad type, e.g. Option<A>
-    MM: Bind<M, Bind<A> = M>,        // MM is the outer monad type, e.g. Option<Option<A>>
-                                     // and its bind operation for M results in M.
+    MM: Bind<M, Bind<A> = M>,          // MM is the outer monad type, e.g. Option<Option<A>>
+                                       // and its bind operation for M results in M.
 {
     mma.bind::<A, _>(|x: M| x) // The function for bind is id: M -> M
 }

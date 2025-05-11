@@ -5,15 +5,7 @@
 use monadify::Profunctor; // These are re-exported
 
 // Items specific to the profunctor module
-use monadify::profunctor::{
-    _key,
-    lcmap,
-    rmap,
-    view,
-    Check,
-    _1,
-    _2,
-};
+use monadify::profunctor::{_key, lcmap, rmap, view, Check, _1, _2};
 
 // Items from other modules
 use monadify::fn1; // Macro is at crate root
@@ -133,7 +125,7 @@ mod profunctor_laws {
     fn profunctor_composition_law() {
         // p: B -> C  (i32 -> String)
         let _p: CFn<i32, String> = CFn::new(|x| format!("Value: {x}")); // Prefixed with _
-        // h: A -> B  (u16 -> i32)
+                                                                        // h: A -> B  (u16 -> i32)
         let h = |x: u16| x as i32 + 10;
         // i: C -> D  (String -> usize) - Simplified
         let i = |s: String| s.len();
@@ -198,7 +190,7 @@ mod strong_laws {
     fn strong_first_dimap_law() {
         // p: i32 -> String
         let _p: CFn<i32, String> = CFn::new(|x| format!("Value: {x}")); // Prefixed with _
-        // f: u16 -> i32
+                                                                        // f: u16 -> i32
         let f = |x: u16| x as i32 + 10;
         // g: String -> usize
         let g = |s: String| s.len();
@@ -235,7 +227,7 @@ mod strong_laws {
     fn strong_second_dimap_law() {
         // p: i32 -> String
         let _p: CFn<i32, String> = CFn::new(|x| format!("Value: {x}")); // Prefixed with _
-        // f: u16 -> i32
+                                                                        // f: u16 -> i32
         let f = |x: u16| x as i32 + 10;
         // g: String -> usize
         let g = |s: String| s.len();
@@ -337,7 +329,7 @@ mod choice_laws {
     fn choice_left_dimap_law() {
         // p: i32 -> String
         let _p: CFn<i32, String> = CFn::new(|x| format!("Value: {x}")); // Prefixed with _
-        // f: u16 -> i32
+                                                                        // f: u16 -> i32
         let f = |x: u16| x as i32 + 10;
         // g: String -> usize
         let g = |s: String| s.len();
@@ -400,7 +392,7 @@ mod choice_laws {
     fn choice_right_dimap_law() {
         // p: i32 -> String
         let _p: CFn<i32, String> = CFn::new(|x| format!("Value: {x}")); // Prefixed with _
-        // f: u16 -> i32
+                                                                        // f: u16 -> i32
         let f = |x: u16| x as i32 + 10;
         // g: String -> usize
         let g = |s: String| s.len();

@@ -1,9 +1,9 @@
 // Content from the original classic module in src/identity.rs
-use crate::legacy::functor::Functor; 
-use crate::legacy::apply::Apply;
+use crate::function::CFn;
 use crate::legacy::applicative::Applicative;
-use crate::legacy::monad::{Bind, Monad};
-use crate::function::CFn; // CFn is not part of legacy/hkt split
+use crate::legacy::apply::Apply;
+use crate::legacy::functor::Functor;
+use crate::legacy::monad::{Bind, Monad}; // CFn is not part of legacy/hkt split
 
 /// Legacy version of the `Identity` monad.
 ///

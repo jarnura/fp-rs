@@ -1,12 +1,12 @@
 #![cfg(all(test, feature = "legacy"))] // Ensure these run only when 'legacy' is active
 
 // These imports will need to point to legacy versions.
-use monadify::legacy::identity::Identity; 
-use monadify::legacy::functor::Functor;
-use monadify::legacy::apply::Apply;
+use monadify::function::CFn;
 use monadify::legacy::applicative::Applicative;
-use monadify::legacy::monad::Bind; // Assuming legacy Monad is also re-exported or directly used
-use monadify::function::CFn; // CFn is not part of legacy/hkt split, path should be fine
+use monadify::legacy::apply::Apply;
+use monadify::legacy::functor::Functor;
+use monadify::legacy::identity::Identity;
+use monadify::legacy::monad::Bind; // Assuming legacy Monad is also re-exported or directly used // CFn is not part of legacy/hkt split, path should be fine
 
 #[test]
 fn test_identity_functor_map() {
@@ -58,7 +58,8 @@ fn test_identity_monad_bind() {
 fn test_identity_monad_left_identity() {
     let a = 10;
     let f = |x: i32| Identity(x * x);
-    let lhs: Identity<i32> = <Identity<i32> as Bind<i32>>::bind(<Identity<i32> as Applicative<i32>>::pure(a), f);
+    let lhs: Identity<i32> =
+        <Identity<i32> as Bind<i32>>::bind(<Identity<i32> as Applicative<i32>>::pure(a), f);
     let rhs: Identity<i32> = f(a);
     assert_eq!(lhs, rhs);
 }
@@ -77,7 +78,8 @@ fn test_identity_monad_associativity() {
     let m = Identity(5);
     let f = |x: i32| Identity(x + 1);
     let g = |y: i32| Identity(y * 2);
-    let lhs = <Identity<i32> as Bind<i32>>::bind(<Identity<i32> as Bind<i32>>::bind(m.clone(), f), g);
+    let lhs =
+        <Identity<i32> as Bind<i32>>::bind(<Identity<i32> as Bind<i32>>::bind(m.clone(), f), g);
     let rhs_fn = move |x: i32| <Identity<i32> as Bind<i32>>::bind(f(x), g);
     let rhs = <Identity<i32> as Bind<i32>>::bind(m, rhs_fn);
     assert_eq!(lhs, rhs);

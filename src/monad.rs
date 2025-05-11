@@ -1,4 +1,5 @@
-pub mod kind { // Renamed from hkt to kind
+pub mod kind {
+    // Renamed from hkt to kind
     //! # Kind-based Monad and Bind for the `monadify` library
     //!
     //! This module defines the `Monad` and `Bind` traits for Kind-encoded types.
@@ -41,10 +42,10 @@ pub mod kind { // Renamed from hkt to kind
     //! ```
 
     use crate::applicative::kind::Applicative; // Kind-based Applicative
-    use crate::apply::kind::Apply;             // Kind-based Apply
+    use crate::apply::kind::Apply; // Kind-based Apply
     use crate::function::{CFn, CFnOnce};
     use crate::kind_based::kind::{
-        Kind, Kind1, OptionKind, ResultKind, VecKind, CFnKind, CFnOnceKind
+        CFnKind, CFnOnceKind, Kind, Kind1, OptionKind, ResultKind, VecKind,
     };
 
     /// Kind-based `Monad` trait.
@@ -69,7 +70,8 @@ pub mod kind { // Renamed from hkt to kind
     /// 2.  `join(map(m, pure)) == m`
     /// 3.  `join(map(mma, join)) == join(join(mma))` (if `map` is defined for `F::Of<F::Of<F::Of<A>>>`)
     ///     or more commonly: `join(map(mmma, |mma| join(mma))) == join(join(mmma))`
-    pub trait Monad<A>: Applicative<A> // Monad holds type A
+    pub trait Monad<A>: Applicative<A>
+    // Monad holds type A
     where
         Self: Sized + Kind1, // Self is the Kind Marker
         A: 'static,
@@ -126,41 +128,57 @@ pub mod kind { // Renamed from hkt to kind
         Self: Sized + Kind1, // Changed HKT1 to Kind1
         A: 'static,
         B: 'static,
-        // Self::Of<B>: 'static, // This was for the default impl, may not be needed at trait level.
-                                   // Apply<A,B> already requires B: 'static.
     {
         /// Sequentially composes computations within the Kind context.
         ///
         /// Takes a value in context (`Self::Of<A>`) and a function (`A -> Self::Of<B>`).
         /// It applies the function to the unwrapped value (if present/valid) and returns
         /// the resulting context `Self::Of<B>`.
-        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B>; // Changed Applied to Of
+        fn bind(
+            input: Self::Of<A>,
+            func: impl FnMut(A) -> Self::Of<B> + Clone + 'static,
+        ) -> Self::Of<B>; // Changed Applied to Of
     }
 
     // --- Bind Implementations ---
 
-    impl<A: 'static, B: 'static> Bind<A, B> for OptionKind { // Changed OptionHKTMarker to OptionKind
+    impl<A: 'static, B: 'static> Bind<A, B> for OptionKind {
+        // Changed OptionHKTMarker to OptionKind
         /// For `Option`, `bind` is equivalent to `Option::and_then`.
         /// If `input` is `Some(a)`, it applies `func` to `a`.
         /// If `input` is `None`, it returns `None`.
-        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
+        fn bind(
+            input: Self::Of<A>,
+            func: impl FnMut(A) -> Self::Of<B> + Clone + 'static,
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             input.and_then(func)
         }
     }
 
-    impl<A: 'static, B: 'static, E: 'static + Clone> Bind<A, B> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
+    impl<A: 'static, B: 'static, E: 'static + Clone> Bind<A, B> for ResultKind<E> {
+        // Changed ResultHKTMarker to ResultKind
         /// For `Result`, `bind` is equivalent to `Result::and_then`.
         /// If `input` is `Ok(a)`, it applies `func` to `a`.
         /// If `input` is `Err(e)`, it propagates the `Err(e)`.
-        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
+        fn bind(
+            input: Self::Of<A>,
+            func: impl FnMut(A) -> Self::Of<B> + Clone + 'static,
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             input.and_then(func)
         }
     }
 
-    impl<A: 'static + Clone, B: 'static> Bind<A, B> for VecKind { // Changed VecHKTMarker to VecKind
+    impl<A: 'static + Clone, B: 'static> Bind<A, B> for VecKind {
+        // Changed VecHKTMarker to VecKind
         /// For `Vec`, `bind` applies `func` to each element and flattens the results.
         /// This is equivalent to `Vec::into_iter().flat_map(func).collect()`.
-        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
+        fn bind(
+            input: Self::Of<A>,
+            func: impl FnMut(A) -> Self::Of<B> + Clone + 'static,
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             input.into_iter().flat_map(func).collect()
         }
     }
@@ -169,11 +187,12 @@ pub mod kind { // Renamed from hkt to kind
     // input: Self::Of<A> which is CFn<R, A>
     // func: A -> Self::Of<B> which is A -> CFn<R, B> (a function producing a function)
     // result: Self::Of<B> which is CFn<R, B> (a new function R -> B)
-    impl<R, A, B: 'static> Bind<A, B> for CFnKind<R> // Changed CFnHKTMarker to CFnKind
+    impl<R, A, B: 'static> Bind<A, B> for CFnKind<R>
+    // Changed CFnHKTMarker to CFnKind
     where
         R: 'static + Clone, // Clone for `r.clone()`
         A: 'static,
-        Self: Apply<A,B>,
+        Self: Apply<A, B>,
         Self: Kind<Of<A> = CFn<R, A>>, // Changed HKT to Kind, Applied to Of
         Self: Kind<Of<B> = CFn<R, B>>, // Changed HKT to Kind, Applied to Of
     {
@@ -185,7 +204,11 @@ pub mod kind { // Renamed from hkt to kind
         /// 1. Calls `input_fn(r)` to get `a: A`.
         /// 2. Calls `func(a)` to get `output_fn: R -> B`.
         /// 3. Calls `output_fn(r)` to get `b: B`.
-        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
+        fn bind(
+            input: Self::Of<A>,
+            func: impl FnMut(A) -> Self::Of<B> + Clone + 'static,
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             let concrete_input_fn = input;
 
             CFn::new(move |r: R| {
@@ -197,11 +220,12 @@ pub mod kind { // Renamed from hkt to kind
         }
     }
 
-    impl<R, A, B: 'static> Bind<A, B> for CFnOnceKind<R> // Changed CFnOnceHKTMarker to CFnOnceKind
+    impl<R, A, B: 'static> Bind<A, B> for CFnOnceKind<R>
+    // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         R: 'static + Clone,
         A: 'static,
-        Self: Apply<A,B>,
+        Self: Apply<A, B>,
         Self: Kind<Of<A> = CFnOnce<R, A>>, // Changed HKT to Kind, Applied to Of
         Self: Kind<Of<B> = CFnOnce<R, B>>, // Changed HKT to Kind, Applied to Of
     {
@@ -209,7 +233,11 @@ pub mod kind { // Renamed from hkt to kind
         ///
         /// Similar to `CFnKind::bind`, but for `CFnOnce`.
         /// The resulting function `R -> B` can also only be called once.
-        fn bind(input: Self::Of<A>, mut func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
+        fn bind(
+            input: Self::Of<A>,
+            mut func: impl FnMut(A) -> Self::Of<B> + Clone + 'static,
+        ) -> Self::Of<B> {
+            // Changed Applied to Of
             let concrete_input = input; // CFnOnce<R,A>
             CFnOnce::new(move |r: R| {
                 let a_val = concrete_input.call_once(r.clone());
@@ -221,35 +249,42 @@ pub mod kind { // Renamed from hkt to kind
 
     // --- Monad Implementations ---
 
-    impl<A: 'static> Monad<A> for OptionKind { // Changed OptionHKTMarker to OptionKind
+    impl<A: 'static> Monad<A> for OptionKind {
+        // Changed OptionHKTMarker to OptionKind
         /// Flattens `Option<Option<A>>` to `Option<A>`.
         /// `Some(Some(a))` becomes `Some(a)`.
         /// `Some(None)` becomes `None`.
         /// `None` becomes `None`.
-        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is Option<Option<A>>. Changed Applied to Of
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> {
+            // mma is Option<Option<A>>. Changed Applied to Of
             mma.and_then(core::convert::identity)
         }
     }
 
-    impl<A: 'static, E: 'static + Clone> Monad<A> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
+    impl<A: 'static, E: 'static + Clone> Monad<A> for ResultKind<E> {
+        // Changed ResultHKTMarker to ResultKind
         /// Flattens `Result<Result<A, E>, E>` to `Result<A, E>`.
         /// `Ok(Ok(a))` becomes `Ok(a)`.
         /// `Ok(Err(e))` becomes `Err(e)`.
         /// `Err(e)` becomes `Err(e)`.
-        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is Result<Result<A,E>, E>. Changed Applied to Of
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> {
+            // mma is Result<Result<A,E>, E>. Changed Applied to Of
             mma.and_then(core::convert::identity)
         }
     }
 
-    impl<A: 'static + Clone> Monad<A> for VecKind { // Changed VecHKTMarker to VecKind
+    impl<A: 'static + Clone> Monad<A> for VecKind {
+        // Changed VecHKTMarker to VecKind
         /// Flattens `Vec<Vec<A>>` to `Vec<A>`.
         /// `vec![vec![1, 2], vec![3]]` becomes `vec![1, 2, 3]`.
-        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is Vec<Vec<A>>. Changed Applied to Of
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> {
+            // mma is Vec<Vec<A>>. Changed Applied to Of
             mma.into_iter().flatten().collect()
         }
     }
 
-    impl<R, A> Monad<A> for CFnKind<R> // Changed CFnHKTMarker to CFnKind
+    impl<R, A> Monad<A> for CFnKind<R>
+    // Changed CFnHKTMarker to CFnKind
     where
         R: 'static + Clone,
         A: 'static + Clone, // From Applicative supertrait for CFnKind<R>
@@ -261,13 +296,15 @@ pub mod kind { // Renamed from hkt to kind
         /// The new function, when called with `r: R`:
         /// 1. Calls `mma(r)` to get `ma: R -> A`.
         /// 2. Calls `ma(r)` to get `a: A`.
-        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is CFn<R, CFn<R,A>>. Changed Applied to Of
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> {
+            // mma is CFn<R, CFn<R,A>>. Changed Applied to Of
             // Bind<Self::Of<A>, A> means Bind<CFn<R,A>, A>
             <Self as Bind<Self::Of<A>, A>>::bind(mma, |ma: Self::Of<A>| ma) // Changed Applied to Of
         }
     }
 
-    impl<R, A> Monad<A> for CFnOnceKind<R> // Changed CFnOnceHKTMarker to CFnOnceKind
+    impl<R, A> Monad<A> for CFnOnceKind<R>
+    // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         R: 'static + Clone,
         A: 'static + Clone, // From Applicative supertrait for CFnOnceKind<R>
@@ -275,7 +312,8 @@ pub mod kind { // Renamed from hkt to kind
         /// Flattens `CFnOnce<R, CFnOnce<R, A>>` to `CFnOnce<R, A>`.
         ///
         /// Similar to `CFnKind::join`, but for `CFnOnce`.
-        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is CFnOnce<R, CFnOnce<R,A>>. Changed Applied to Of
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> {
+            // mma is CFnOnce<R, CFnOnce<R,A>>. Changed Applied to Of
             <Self as Bind<Self::Of<A>, A>>::bind(mma, |ma: Self::Of<A>| ma) // Changed Applied to Of
         }
     }
@@ -299,7 +337,8 @@ pub mod kind { // Renamed from hkt to kind
     pub fn bind<F, A, B, FuncImpl>(
         func: FuncImpl,
         ma: F::Of<A>, // Changed Applied to Of
-    ) -> F::Of<B>     // Changed Applied to Of
+    ) -> F::Of<B>
+    // Changed Applied to Of
     where
         F: Bind<A, B> + Kind1, // F is the KindMarker. Changed HKT1 to Kind1
         FuncImpl: FnMut(A) -> F::Of<B> + Clone + 'static, // Changed Applied to Of
@@ -311,5 +350,5 @@ pub mod kind { // Renamed from hkt to kind
 }
 
 // Directly export Kind-based Bind, Monad, and helper bind
-pub use kind::{Bind, Monad, bind}; // Renamed from hkt to kind
-// Note: join is a method on the Monad trait in the kind module.
+pub use kind::{bind, Bind, Monad}; // Renamed from hkt to kind
+                                   // Note: join is a method on the Monad trait in the kind module.

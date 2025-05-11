@@ -8,26 +8,30 @@ use monadify::kind_based::kind::*; // Imports Kind, OptionKind, ResultKind, etc.
 /// `Self` is the Kind constructor (e.g., `OptionKind`).
 /// `A` is the input type of the contained value.
 /// `B` is the output type of the contained value after mapping.
-pub trait FunctorExample<A, B>: Kind1 { // Kind1 implies Self: Kind
+pub trait FunctorExample<A, B>: Kind1 {
+    // Kind1 implies Self: Kind
     fn map_example(input: Self::Of<A>, func: impl Fn(A) -> B) -> Self::Of<B>; // Changed Applied to Of
 }
 
 // Example implementation for OptionKind
-impl<A, B> FunctorExample<A, B> for OptionKind { // Changed OptionHKTMarker to OptionKind
+impl<A, B> FunctorExample<A, B> for OptionKind {
+    // Changed OptionHKTMarker to OptionKind
     fn map_example(input: Option<A>, func: impl Fn(A) -> B) -> Option<B> {
         input.map(func)
     }
 }
 
 // Example implementation for ResultKind<E>
-impl<A, B, E> FunctorExample<A, B> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
+impl<A, B, E> FunctorExample<A, B> for ResultKind<E> {
+    // Changed ResultHKTMarker to ResultKind
     fn map_example(input: Result<A, E>, func: impl Fn(A) -> B) -> Result<B, E> {
         input.map(func)
     }
 }
 
 #[test]
-fn test_functor_example_option_kind() { // Renamed test
+fn test_functor_example_option_kind() {
+    // Renamed test
     let option_a: Option<i32> = Some(5);
     let option_b = OptionKind::map_example(option_a, |x| x * 2); // Renamed Marker
     assert_eq!(option_b, Some(10));
@@ -38,7 +42,8 @@ fn test_functor_example_option_kind() { // Renamed test
 }
 
 #[test]
-fn test_functor_example_result_kind() { // Renamed test
+fn test_functor_example_result_kind() {
+    // Renamed test
     type MyResult<T> = Result<T, String>;
     type MyResultKind = ResultKind<String>; // Renamed HKT to Kind
 

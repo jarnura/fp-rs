@@ -1,4 +1,5 @@
-pub mod kind { // Renamed from hkt to kind to align with the Kind trait
+pub mod kind {
+    // Renamed from hkt to kind to align with the Kind trait
     //! # Kind-based Functor for the `monadify` library
     //!
     //! This module defines the `Functor` trait for types that implement the Kind pattern.
@@ -15,8 +16,8 @@ pub mod kind { // Renamed from hkt to kind to align with the Kind trait
     //! It relies on the [`Kind1`] trait from `crate::kind_based::kind` to relate the
     //! marker `Self` to its concrete type application `Self::Of<T>`.
 
-    use crate::kind_based::kind::{Kind1, OptionKind, ResultKind, VecKind, CFnKind, CFnOnceKind};
     use crate::function::{CFn, CFnOnce};
+    use crate::kind_based::kind::{CFnKind, CFnOnceKind, Kind1, OptionKind, ResultKind, VecKind};
 
     /// Represents a type constructor that can be mapped over, using the Kind pattern.
     ///
@@ -33,7 +34,8 @@ pub mod kind { // Renamed from hkt to kind to align with the Kind trait
     /// 2.  **Composition**: For any Kind marker `F`, value `x: F::Of<A>`, and functions
     ///     `f: A -> B`, `g: B -> C`,
     ///     `F::map(F::map(x, f), g) == F::map(x, |a| g(f(a)))`.
-    pub trait Functor<A, B>: Kind1 { // A is input type, B is output type for map
+    pub trait Functor<A, B>: Kind1 {
+        // A is input type, B is output type for map
         /// Applies a function to a value (or values) within a Kind-encoded structure.
         ///
         /// # Type Parameters
@@ -86,8 +88,7 @@ pub mod kind { // Renamed from hkt to kind to align with the Kind trait
         A: 'static,
         B: 'static, // B must be 'static for CFn<X,B> which is Self::Of<B>
     {
-        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B>
-        {
+        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B> {
             // input is CFn<X, A>
             // func is A -> B
             // result is CFn<X, B>
@@ -111,7 +112,7 @@ pub mod kind { // Renamed from hkt to kind to align with the Kind trait
 }
 
 // Directly export Kind-based Functor
-pub use kind::{Functor}; // Renamed from hkt to kind
-// Note: CFnKind and CFnOnceKind are defined in kind_based::kind
-// and Functor implementations for them are in the kind module above.
-// This re-export makes `crate::functor::Functor` point to the Kind-based one.
+pub use kind::Functor; // Renamed from hkt to kind
+                       // Note: CFnKind and CFnOnceKind are defined in kind_based::kind
+                       // and Functor implementations for them are in the kind module above.
+                       // This re-export makes `crate::functor::Functor` point to the Kind-based one.

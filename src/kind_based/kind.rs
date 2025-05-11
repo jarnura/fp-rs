@@ -1,4 +1,3 @@
-
 //! # Kind (Higher-Kinded Type) Infrastructure
 //!
 //! This module provides the core traits and marker types for simulating

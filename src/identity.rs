@@ -1,7 +1,8 @@
 //! # Identity Monad for the `monadify` library
 // Kind-based version is now default.
 
-pub mod kind { // Renamed from hkt to kind
+pub mod kind {
+    // Renamed from hkt to kind
     //! # Kind-based Identity Monad
     //!
     //! This module provides the Kind-based implementation of the `Identity` monad.
@@ -40,12 +41,12 @@ pub mod kind { // Renamed from hkt to kind
     //! assert_eq!(joined_id, Identity(100));
     //! ```
 
-    use crate::kind_based::kind::Kind; // Changed HKT to Kind
-    use crate::functor::kind as functor_kind; // Renamed hkt to kind
-    use crate::apply::kind as apply_kind;       // Renamed hkt to kind
     use crate::applicative::kind as applicative_kind; // Renamed hkt to kind
-    use crate::monad::kind as monad_kind;       // Renamed hkt to kind
-    use crate::function::CFn; // For Apply's function container
+    use crate::apply::kind as apply_kind; // Renamed hkt to kind
+    use crate::function::CFn;
+    use crate::functor::kind as functor_kind; // Renamed hkt to kind
+    use crate::kind_based::kind::Kind; // Changed HKT to Kind
+    use crate::monad::kind as monad_kind; // Renamed hkt to kind // For Apply's function container
 
     /// A simple wrapper struct that holds a value of type `A`.
     ///
@@ -61,13 +62,15 @@ pub mod kind { // Renamed from hkt to kind
     #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
     pub struct IdentityKind; // Renamed from IdentityHKTMarker
 
-    impl Kind for IdentityKind { // Changed HKT to Kind, IdentityHKTMarker to IdentityKind
+    impl Kind for IdentityKind {
+        // Changed HKT to Kind, IdentityHKTMarker to IdentityKind
         type Of<T> = Identity<T>; // Changed Applied to Of
     }
     // Kind1 is implemented by the blanket impl in kind_based/kind.rs for types that impl Kind.
 
     // Kind-based Functor for IdentityKind
-    impl<A, B> functor_kind::Functor<A, B> for IdentityKind // Changed IdentityHKTMarker to IdentityKind
+    impl<A, B> functor_kind::Functor<A, B> for IdentityKind
+    // Changed IdentityHKTMarker to IdentityKind
     // No 'static bounds needed here for A, B for basic map
     {
         /// Applies a function to the value inside `Identity`.
@@ -78,7 +81,8 @@ pub mod kind { // Renamed from hkt to kind
     }
 
     // Kind-based Apply for IdentityKind
-    impl<A, B> apply_kind::Apply<A, B> for IdentityKind // Changed IdentityHKTMarker to IdentityKind
+    impl<A, B> apply_kind::Apply<A, B> for IdentityKind
+    // Changed IdentityHKTMarker to IdentityKind
     where
         A: 'static, // Required by Apply trait definition
         B: 'static, // Required by Apply trait definition
@@ -93,33 +97,39 @@ pub mod kind { // Renamed from hkt to kind
     }
 
     // Kind-based Applicative for IdentityKind
-    impl<T: 'static> applicative_kind::Applicative<T> for IdentityKind // Changed IdentityHKTMarker to IdentityKind
+    impl<T: 'static> applicative_kind::Applicative<T> for IdentityKind
+    // Changed IdentityHKTMarker to IdentityKind
     // T: 'static is already on the Applicative trait
     {
         /// Lifts a value `T` into `Identity<T>`.
-        fn pure(value: T) -> Identity<T> { // Self::Of<T> is Identity<T>
+        fn pure(value: T) -> Identity<T> {
+            // Self::Of<T> is Identity<T>
             Identity(value)
         }
     }
 
     // Kind-based Bind for IdentityKind
-    impl<A, B> monad_kind::Bind<A, B> for IdentityKind // Changed IdentityHKTMarker to IdentityKind
+    impl<A, B> monad_kind::Bind<A, B> for IdentityKind
+    // Changed IdentityHKTMarker to IdentityKind
     where
         A: 'static, // Required by Bind trait definition
         B: 'static, // Required by Bind trait definition
     {
         /// Applies a function `A -> Identity<B>` to the value inside `Identity<A>`.
         /// Effectively, it unwraps the value, applies the function, and returns the new `Identity<B>`.
-        fn bind(input: Identity<A>, mut func: impl FnMut(A) -> Identity<B>) -> Identity<B> { // Self::Of<B> is Identity<B>
+        fn bind(input: Identity<A>, mut func: impl FnMut(A) -> Identity<B>) -> Identity<B> {
+            // Self::Of<B> is Identity<B>
             func(input.0)
         }
     }
 
     // Kind-based Monad for IdentityKind
-    impl<A: 'static> monad_kind::Monad<A> for IdentityKind { // Changed IdentityHKTMarker to IdentityKind
+    impl<A: 'static> monad_kind::Monad<A> for IdentityKind {
+        // Changed IdentityHKTMarker to IdentityKind
         /// Flattens `Identity<Identity<A>>` to `Identity<A>`.
         /// This simply unwraps the outer `Identity`.
-        fn join(mma: Identity<Identity<A>>) -> Identity<A> { // Self::Of<Self::Of<A>> is Identity<Identity<A>>
+        fn join(mma: Identity<Identity<A>>) -> Identity<A> {
+            // Self::Of<Self::Of<A>> is Identity<Identity<A>>
             // mma is Identity(Identity(value))
             // mma.0 is Identity(value)
             // So, we return mma.0 directly. This is Self::Of<A>.
