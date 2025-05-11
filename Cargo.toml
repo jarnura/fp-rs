@@ -1,11 +1,17 @@
 [package]
 name = "fp-rs"
-description = "Monads in Rust"
+description = "A library for functional programming abstractions in Rust, focusing on Monads, Functors, Applicatives, and related concepts."
 version = "0.1.0"
+authors = ["jarnura"]
 edition = "2021"
-rust-version = "1.66"
-readme = "README.md"
+rust-version = "1.66" # Minimum supported Rust version
 license = "Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/jarnura/fp-rs"
+homepage = "https://github.com/jarnura/fp-rs"
+documentation = "https://docs.rs/fp-rs" # Will be live after publishing to crates.io
+keywords = ["functional", "fp", "monad", "functor", "applicative", "profunctor", "rust-patterns"]
+categories = ["rust-patterns", "algorithms"] # Removed "no-std" as std is currently used
 
 [dependencies]
 
@@ -15,3 +21,7 @@ criterion = { version = "0.4.0", features = ["html_reports"] }
 [[bench]]
 name = "compare"
 harness = false
+
+[features]
+default = [] # HKT is now the default, no feature needed to enable it.
+legacy = []  # Optional feature to include legacy implementations.
