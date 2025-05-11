@@ -6,9 +6,6 @@ use monadify::applicative::hkt::Applicative;
 use monadify::monad::hkt::{Bind, Monad};
 use monadify::identity::hkt::{Identity, IdentityHKTMarker};
 use monadify::OptionHKTMarker; // Added import
-// use fp_rs::kind_based::kind::OptionHKTMarker; // Removed unused import
-// CFn is not directly used in these HKT tests for ReaderT, but good to have if needed for other HKT types
-// use fp_rs::function::CFn;
 
 #[derive(Clone, Debug, PartialEq)]
 struct EnvConfig { pub val: i32 }
@@ -109,7 +106,7 @@ fn test_reader_t_hkt_monad_law_left_identity() {
     let lhs: TestReader<String> = TestReaderHKT::bind(TestReaderHKT::pure(a), f.clone());
     let rhs: TestReader<String> = f(a);
 
-    assert_readers_eq(lhs, rhs, env.clone());
+    assert_readers_eq(lhs.clone(), rhs.clone(), env.clone()); // Added .clone() for assert_readers_eq
     let expected_val_rhs = ((f(a)).run_reader_t)(env).0;
     assert_eq!(expected_val_rhs, "15");
 }
@@ -124,7 +121,7 @@ fn test_reader_t_hkt_monad_law_right_identity() {
     let lhs: TestReader<i32> = TestReaderHKT::bind(m_orig.clone(), pure_fn);
     let rhs: TestReader<i32> = m_orig.clone();
 
-    assert_readers_eq(lhs, rhs, env.clone());
+    assert_readers_eq(lhs.clone(), rhs.clone(), env.clone()); // Added .clone() for assert_readers_eq
     let val_m_orig = (m_orig.run_reader_t)(env).0;
     assert_eq!(val_m_orig, 14);
 }
@@ -146,22 +143,13 @@ fn test_reader_t_hkt_monad_law_associativity() {
     let f_clone_for_rhs = f.clone();
     let g_clone_for_rhs = g.clone();
     let composed_func = move |x_val: i32| -> TestReader<String> {
-        TestReaderHKT::bind(f_clone_for_rhs(x_val), g_clone_for_rhs.clone())
+        TestReaderHKT::bind(f_clone_for_rhs(x_val), g_clone_for_rhs.clone()) // This inner bind is already correct
     };
-    let rhs: TestReader<String> = TestReaderHKT::bind(m_orig.clone(), composed_func);
+    let rhs: TestReader<String> = TestReaderHKT::bind(m_orig.clone(), composed_func); // This outer bind is already correct
 
     assert_readers_eq(lhs.clone(), rhs.clone(), env.clone());
     let val_lhs = (lhs.run_reader_t)(env).0;
     assert_eq!(val_lhs, "15");
-}
-
-// Helper to run ReaderT with Identity inner monad and compare
-fn run_hkt_reader_t_identity<R: Clone + 'static, A: PartialEq + std::fmt::Debug + Clone + 'static>(
-    reader: ReaderT<R, IdentityHKTMarker, A>,
-    env: R,
-) -> Identity<A> {
-    // Assuming ReaderT is Clone because it uses Rc internally
-    (reader.run_reader_t)(env)
 }
 
 // Helper to run ReaderT with Option inner monad and compare
@@ -215,8 +203,8 @@ fn test_hkt_reader_t_monad_laws_option_inner() {
     // --- Test with m_opt_some ---
     // Law 1: pure(a).bind(f) == f(a)
     let pure_a_opt: ReaderT<Env, OptionHKTMarker, A> =
-        ReaderT::<Env, OptionHKTMarker, A>::pure(a_val);
-    let left_law1_opt = pure_a_opt.bind(f_opt);
+        ReaderTHKTMarker::<Env, OptionHKTMarker>::pure(a_val);
+    let left_law1_opt = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(pure_a_opt.clone(), f_opt.clone()); // Added .clone() for bind
     let right_law1_opt = f_opt(a_val);
     assert_eq!(
         run_hkt_reader_t_option(left_law1_opt.clone(), env_val),
@@ -224,9 +212,7 @@ fn test_hkt_reader_t_monad_laws_option_inner() {
     );
 
     // Law 2: m.bind(pure) == m
-    let left_law2_opt = m_opt_some
-        .clone()
-        .bind(|x: A| ReaderT::<Env, OptionHKTMarker, A>::pure(x));
+    let left_law2_opt = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(m_opt_some.clone(), |x: A| ReaderTHKTMarker::<Env, OptionHKTMarker>::pure(x)); // Corrected pure and bind
     let right_law2_opt = m_opt_some.clone();
     assert_eq!(
         run_hkt_reader_t_option(left_law2_opt, env_val),
@@ -234,8 +220,8 @@ fn test_hkt_reader_t_monad_laws_option_inner() {
     );
 
     // Law 3: m.bind(f).bind(g) == m.bind(|x| f(x).bind(g))
-    let left_law3_opt = m_opt_some.clone().bind(f_opt).bind(g_opt);
-    let right_law3_opt = m_opt_some.bind(move |x: A| f_opt(x).bind(g_opt));
+    let left_law3_opt = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(m_opt_some.clone(), f_opt.clone()), g_opt.clone());
+    let right_law3_opt = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(m_opt_some.clone(), move |x: A| ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(f_opt(x), g_opt.clone()));
     assert_eq!(
         run_hkt_reader_t_option(left_law3_opt.clone(), env_val),
         run_hkt_reader_t_option(right_law3_opt.clone(), env_val)
@@ -245,8 +231,8 @@ fn test_hkt_reader_t_monad_laws_option_inner() {
     // Law 1: Test f_opt with a value that makes it None (doesn't involve m_opt_none directly for this form)
     let val_for_f_none: A = -1;
     let pure_val_for_f_none: ReaderT<Env, OptionHKTMarker, A> =
-        ReaderT::<Env, OptionHKTMarker, A>::pure(val_for_f_none);
-    let left_law1_f_none = pure_val_for_f_none.bind(f_opt);
+        ReaderTHKTMarker::<Env, OptionHKTMarker>::pure(val_for_f_none);
+    let left_law1_f_none = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(pure_val_for_f_none.clone(), f_opt.clone()); // Added .clone() for bind
     let right_law1_f_none = f_opt(val_for_f_none);
      assert_eq!(
         run_hkt_reader_t_option(left_law1_f_none.clone(), env_val),
@@ -256,9 +242,7 @@ fn test_hkt_reader_t_monad_laws_option_inner() {
 
 
     // Law 2: m.bind(pure) == m (with m_opt_none)
-    let left_law2_none = m_opt_none
-        .clone()
-        .bind(|x: A| ReaderT::<Env, OptionHKTMarker, A>::pure(x));
+    let left_law2_none = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(m_opt_none.clone(), |x: A| ReaderTHKTMarker::<Env, OptionHKTMarker>::pure(x)); // Corrected pure and bind
     let right_law2_none = m_opt_none.clone();
     assert_eq!(
         run_hkt_reader_t_option(left_law2_none.clone(), env_val),
@@ -267,8 +251,8 @@ fn test_hkt_reader_t_monad_laws_option_inner() {
     assert_eq!(run_hkt_reader_t_option(right_law2_none.clone(), env_val), None);
 
     // Law 3: m.bind(f).bind(g) == m.bind(|x| f(x).bind(g)) (with m_opt_none)
-    let left_law3_none = m_opt_none.clone().bind(f_opt).bind(g_opt);
-    let right_law3_none = m_opt_none.bind(move |x: A| f_opt(x).bind(g_opt));
+    let left_law3_none = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(m_opt_none.clone(), f_opt.clone()), g_opt.clone());
+    let right_law3_none = ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(m_opt_none.clone(), move |x: A| ReaderTHKTMarker::<Env, OptionHKTMarker>::bind(f_opt(x), g_opt.clone()));
     assert_eq!(
         run_hkt_reader_t_option(left_law3_none.clone(), env_val),
         run_hkt_reader_t_option(right_law3_none.clone(), env_val)

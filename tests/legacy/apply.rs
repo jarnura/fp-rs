@@ -1,16 +1,3 @@
-// Original content from src/apply.rs mod tests
-// with use statements adjusted for the new location.
-
-// Assuming fn2 and fn3 macros are exported from the crate root (e.g. from function.rs via #[macro_export])
-// and Apply, Functor are re-exported from lib.rs.
-// lift2, lift3 are specific to the apply module.
-
-// These imports will need to point to legacy versions.
-// For now, using placeholder paths that will be fixed in Phase 5.
-// use fp_rs::legacy_apply::{lift2, lift3};
-// use fp_rs::legacy_functor::Functor;
-// use fp_rs::{fn2, fn3}; // Assuming these macros are accessible from crate root
-
 #[cfg(test)]
 mod classic_apply_tests {
     // The lift2, lift3 functions are from crate::legacy::apply
