@@ -1,55 +1,78 @@
 # System Patterns
 
 ## System Architecture
-- **Library Crate:** The project is structured as a Rust library crate, intended to be used as a dependency in other Rust projects.
-- **Modular Design:** Functional programming concepts (Functor, Apply, Applicative, Bind, etc.) are organized into separate modules (e.g., `functor.rs`, `apply.rs`). These modules are further structured to support the HKT refactoring:
-    - Each conceptual trait (e.g., Functor) now primarily uses an `hkt` submodule for the Higher-Kinded Type approach (marker traits and GATs). The `classic` submodules (older, associated type-based approach) are retained but gated by `#[cfg(not(feature = "kind"))]`.
-    - The HKT system itself is defined in `src/kind_based/`.
-    - Monad transformers (e.g., `ReaderT`) in `src/transformers/` have been refactored for HKT.
-- **Trait-based Generics:** Core abstractions are defined using Rust traits, allowing various data types to implement these functional behaviors. This promotes polymorphism and code reuse.
+- **Library Crate:** The project is structured as a Rust library crate.
+- **Modular Design:**
+    - **HKT-by-Default:** Higher-Kinded Type (HKT) implementations are now the default for core functional traits (`Functor`, `Apply`, `Applicative`, `Monad`, etc.). These are located directly within their respective modules (e.g., `src/functor.rs`, `src/identity.rs`).
+    - **Legacy Implementations:** Older, "classic" (associated type-based) implementations have been moved to a new `src/legacy/` directory structure (e.g., `src/legacy/functor.rs`, `src/legacy/transformers/reader.rs`). These are accessible via a `legacy` feature flag.
+    - **HKT Core:** The HKT system itself (marker traits, GATs) is defined in `src/kind_based/`.
+    - **Transformers:** Monad transformers (e.g., `ReaderT` in `src/transformers/reader.rs`) use HKTs by default. Legacy transformer versions are in `src/legacy/transformers/`.
+- **Trait-based Generics:** Core abstractions are defined using Rust traits.
 - **Testing Structure:**
-    - Classic implementation tests are in the top-level `tests/` directory (e.g., `tests/functor.rs`), gated by `#[cfg(not(feature = "kind"))]`.
-    - HKT implementation tests are located in the `tests/hkt/` subdirectory (e.g., `tests/hkt/functor.rs`), organized by trait. These are pulled into the test suite via `tests/hkt_integration.rs` and are gated by `#[cfg(feature = "kind")]`.
-    - This structure ensures clear separation and conditional compilation of tests based on the active feature set.
+    - **Default Tests (HKT):** Tests for HKT implementations are located in `tests/hkt/` (e.g., `tests/hkt/functor.rs`) and specific files like `tests/transformers/reader_test.rs` (for HKT `ReaderT`). These are run by default, integrated via `tests/hkt_integration.rs`.
+    - **Legacy Tests:** Tests for classic implementations are located in `tests/legacy/` (e.g., `tests/legacy/functor.rs`, `tests/legacy/transformers/reader_test.rs`). These are run when the `legacy` feature is enabled, integrated via `tests/legacy_integration.rs`.
+    - This structure ensures clear separation and conditional compilation of tests.
 
 ## Key Technical Decisions
-- **Focus on Idiomatic Rust:** Prioritize solutions that align with Rust's ownership, borrowing, and type system principles. Avoid direct translations from other languages if they result in unidiomatic Rust.
-- **HKT as Primary Abstraction (with `kind` feature):** The HKT system is now the primary way of defining and using Functor, Apply, Applicative, Bind, and Monad traits when the `kind` feature is enabled.
+- **Focus on Idiomatic Rust:** Prioritize solutions that align with Rust's ownership, borrowing, and type system principles.
+- **HKT as Default Abstraction:** The HKT system (marker traits and GATs) is the primary and default way of defining and using `Functor`, `Apply`, `Applicative`, `Monad`, etc. The `kind` feature has been removed.
+- **Legacy Support:** Classic implementations are available via the `legacy` feature flag, residing in the `src/legacy/` directory.
 - **Leverage Existing Rust Types:** Where appropriate, implement monadic traits for standard Rust types like `Option<T>`, `Result<T, E>`, and `Vec<T>` to showcase their monadic nature and provide immediate utility.
 - **Higher-Kinded Types (HKT) Implementation:** The project implements a Higher-Kinded Type system using:
-    - **Marker Traits:** `HKT` and `HKT1` defined in `src/kind_based/kind.rs`. `HKT1` is a marker for type constructors that take one type argument (e.g., `Option<_>`).
-    - **Generic Associated Types (GATs):** The `HKT1` trait defines an associated type `type Applied<T>`, which represents the concrete type after applying the type argument `T` (e.g., for `OptionHKTMarker`, `Self::Applied<String>` would be `Option<String>`).
-    - **Marker Types:** Specific structs (e.g., `OptionHKTMarker`, `VecHKTMarker`, `CFnHKTMarker<X>`, `IdentityHKTMarker`, `ReaderTHKTMarker<R, MMarker>`) implement `HKT1` to act as representatives for their respective type constructors.
-This approach allows traits like `hkt::Functor` to be generic over the HKT marker. This system is now stable and implemented through `Monad` for `Option`, `Result`, `Vec`, `CFn`, `CFnOnce`, `Identity`, and `ReaderT`. (See also: [HKT Constraints in Tech Context](./techContext.md#higher-kinded-types-hkts))
-- **Minimal Dependencies:** Aim to keep external dependencies to a minimum to ensure the library is lightweight and easy to integrate.
+    - **Marker Traits:** `HKT` and `HKT1` defined in `src/kind_based/kind.rs`.
+    - **Generic Associated Types (GATs):** The `HKT1` trait defines `type Applied<T>`.
+    - **Marker Types:** Specific structs (e.g., `OptionHKTMarker`, `ReaderTHKTMarker`) implement `HKT1`.
+This system is stable and implemented for `Option`, `Result`, `Vec`, `CFn`, `CFnOnce`, `Identity`, and `ReaderT`. (See also: [HKT Constraints in Tech Context](./techContext.md#higher-kinded-types-hkts))
+- **Minimal Dependencies:** Aim for minimal external dependencies.
 
 ## Design Patterns in Use
-- **Trait-based Polymorphism:** As mentioned, traits are central to defining and implementing functional interfaces.
-- **Type Classes:** The traits for `Functor`, `Applicative`, `Monad`, etc., act as type classes, defining behavior for types that can instantiate them.
-- **Composition over Inheritance:** Functional patterns will be achieved through composition of functions and types, rather than classical inheritance.
-- **Monad Transformers:** Patterns like `ReaderT` allow augmenting existing monads with new capabilities (e.g., access to a read-only environment).
-    - **`ReaderT<R, M, A>`:** A monad transformer that wraps an inner monad `M` and provides access to a read-only environment of type `R`. Computations are of the form `R -> M<A>`. It implements `Functor`, `Apply`, `Applicative`, and `Monad` if the inner monad `M` does. It also implements `MonadReader` to provide `ask` (to get the environment) and `local` (to run a computation with a modified environment).
-    - **`Identity<A>`:** A simple monad that just wraps a value. Often used as the base monad for simpler versions of transformers, e.g., `Reader<R, A>` is `ReaderT<R, Identity<A>, A>`.
+- **Trait-based Polymorphism:** Central to defining functional interfaces.
+- **Type Classes:** Traits like `Functor`, `Applicative`, `Monad` act as type classes.
+- **Composition over Inheritance:** Standard functional programming approach.
+- **Monad Transformers:** `ReaderT` augments existing monads.
+    - **Default `ReaderT<R, MMarker, A>`:** Uses HKT marker `MMarker` for the inner monad.
+    - **Legacy `ReaderT<R, M, A>`:** Uses concrete type `M` for the inner monad.
+    - **`Identity<A>`:** Simple monad, used with both HKT (`IdentityHKTMarker`) and legacy versions.
 
 ## Component Relationships
-- `src/kind_based/kind.rs`: Defines the core HKT infrastructure, including the `HKT<A>`, `HKT1` traits, and various HKT marker types (e.g., `OptionHKTMarker`, `CFnHKTMarker`). This is foundational for the new HKT system.
-- `src/kind_based/mod.rs`: Module file for the `kind_based` system.
-- `functor.rs`: Defines `classic::Functor` (gated) and `hkt::Functor<A, B>` (primary HKT style).
-- `apply.rs`: Defines `classic::Apply` (gated) and `hkt::Apply<A, B>` (primary HKT style).
-- `applicative.rs`: Defines `classic::Applicative` (gated) and `hkt::Applicative<T>` (primary HKT style).
-- `monad.rs`: Defines `classic::Bind` and `classic::Monad` (gated). The `hkt::Bind<A, B>` and `hkt::Monad<A>` traits are the primary HKT versions. The `hkt::Monad` trait is now fully implemented and used.
-- `identity.rs`: Defines `Identity<A>` and `IdentityHKTMarker`, with HKT trait implementations.
-- `transformers/reader.rs`: Defines `ReaderT<R, MMarker, A>` and `ReaderTHKTMarker<R, MMarker>`, with HKT trait implementations including `MonadReader`.
-- `lib.rs`: Main library file, re-exporting HKT traits and types when the `kind` feature is active.
-- `utils.rs`: Helper functions and macros. `bfn!` macros are currently commented out.
-- `function.rs`: Defines `CFn` and `CFnOnce`.
-- `profunctor.rs`: Implements `Profunctor`, `Strong`, `Choice`.
-- `transformers/mod.rs`: Module for organizing monad transformers.
+- **Core HKT:**
+    - `src/kind_based/kind.rs`: Defines `HKT`, `HKT1`, and HKT marker types.
+    - `src/kind_based/mod.rs`: Module file for `kind_based`.
+- **Main Functional Traits (HKT Default):**
+    - `src/functor.rs`: Defines HKT `Functor`.
+    - `src/apply.rs`: Defines HKT `Apply`.
+    - `src/applicative.rs`: Defines HKT `Applicative`.
+    - `src/monad.rs`: Defines HKT `Bind` and `Monad`.
+    - `src/identity.rs`: Defines `Identity<A>` and `IdentityHKTMarker`, with HKT trait implementations.
+    - `src/transformers/reader.rs`: Defines HKT `ReaderT<R, MMarker, A>` and `ReaderTHKTMarker`, with HKT trait implementations including `MonadReader`.
+- **Legacy Components (gated by `legacy` feature):**
+    - `src/legacy/mod.rs`: Main module for legacy code.
+    - `src/legacy/functor.rs`: Defines classic `Functor`.
+    - `src/legacy/apply.rs`: Defines classic `Apply`.
+    - `src/legacy/applicative.rs`: Defines classic `Applicative`.
+    - `src/legacy/monad.rs`: Defines classic `Bind` and `Monad`.
+    - `src/legacy/identity.rs`: Defines classic implementations for `Identity<A>`.
+    - `src/legacy/transformers/mod.rs`: Module for legacy transformers.
+    - `src/legacy/transformers/reader.rs`: Defines classic `ReaderT<R, M, A>` and its implementations.
+- **Library Entry Point:**
+    - `src/lib.rs`: Re-exports HKT traits and types by default. Exports the `legacy` module if the `legacy` feature is active.
+- **Utilities & Other:**
+    - `src/utils.rs`: Helper functions. Obsolete `bfn!` macros have been removed.
+    - `src/function.rs`: Defines `CFn`, `CFnOnce`. Obsolete `BindableFn` code has been removed.
+    - `src/profunctor.rs`: Implements `Profunctor`, `Strong`, `Choice` (currently non-HKT).
+    - `src/transformers/mod.rs`: Module for HKT monad transformers.
 
 ## Critical Implementation Paths
-- **HKT Refactoring (Completed):**
-    - Defining core HKT traits (`HKT`, `HKT1`) and markers.
-    - Refactoring `Functor`, `Apply`, `Applicative`, `Bind`, `Monad` to use the HKT pattern.
-    - Updating `Option`, `Result`, `Vec`, `CFn`, `CFnOnce`, `Identity`, and `ReaderT` to implement these HKT traits.
-- **Testing (Completed for HKT):**
-    - Ensuring all HKT laws for Functor, Applicative, and Monad are upheld by the implementations through comprehensive integration tests in `tests/hkt/`. (Note: Some Applicative laws for `CFn`-like types are untestable due to `Clone` constraints).
+- **HKT System Implementation (Completed):**
+    - Core HKT traits and markers defined.
+    - `Functor`, `Apply`, `Applicative`, `Bind`, `Monad` refactored to use HKT.
+    - `Option`, `Result`, `Vec`, `CFn`, `CFnOnce`, `Identity`, `ReaderT` updated for HKT.
+- **HKT-by-Default Refactor (Completed):**
+    - Moved classic code to `src/legacy/`.
+    - Updated main source files and `src/lib.rs` for HKT-default.
+    - Updated `Cargo.toml` (removing `kind` feature, adding `legacy` feature).
+    - Reorganized test suite for HKT-default and legacy tests.
+    - Fixed `use` paths in `src/legacy/` (completed) and `tests/legacy/` (completed).
+- **Testing (Completed):**
+    - HKT laws tested for all relevant types. Default tests (`cargo test`) pass.
+    - Legacy tests verified and pass (`cargo test --features legacy`).

@@ -1,5 +1,3 @@
-#![cfg(all(test, feature = "kind"))]
-
 // Imports adjusted for the new location
 use fp_rs::transformers::reader::hkt::*; // ReaderT, ReaderTHKTMarker, MonadReader (hkt version)
 use fp_rs::functor::hkt::Functor;

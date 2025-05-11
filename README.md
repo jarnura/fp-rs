@@ -37,16 +37,14 @@ Here's a quick example of using the `Functor` trait with `Option` (assuming the 
 ```rust
 use fp_rs::{Functor, OptionHKTMarker}; // Import HKT Functor and marker
 
-fn main() {
-    let some_value: Option<i32> = Some(10);
-    // For HKT, Functor<A,B> is on the marker OptionHKTMarker
-    let mapped_value = OptionHKTMarker::map(some_value, |x| x * 2);
-    assert_eq!(mapped_value, Some(20));
+let some_value: Option<i32> = Some(10);
+// For HKT, Functor<A,B> is on the marker OptionHKTMarker
+let mapped_value = OptionHKTMarker::map(some_value, |x| x * 2);
+assert_eq!(mapped_value, Some(20));
 
-    let no_value: Option<i32> = None;
-    let mapped_none = OptionHKTMarker::map(no_value, |x: i32| x * 2);
-    assert_eq!(mapped_none, None);
-}
+let no_value: Option<i32> = None;
+let mapped_none = OptionHKTMarker::map(no_value, |x: i32| x * 2);
+assert_eq!(mapped_none, None);
 ```
 
 And an example using `Bind` (often called `flat_map`), assuming the `kind` feature:
@@ -58,10 +56,9 @@ fn try_parse_and_double(s: &str) -> Option<i32> {
     s.parse::<i32>().ok().map(|n| n * 2)
 }
 
-fn main() {
-    let opt_str: Option<String> = Some("5".to_string());
+let opt_str: Option<String> = Some("5".to_string());
 
-    // For HKT, Bind<A,B> is on the marker OptionHKTMarker
+// For HKT, Bind<A,B> is on the marker OptionHKTMarker
     // The closure takes String because OptionHKTMarker::Applied<String> is Option<String>
     let result = OptionHKTMarker::bind(
         opt_str,
@@ -75,7 +72,6 @@ fn main() {
         |st: String| try_parse_and_double(&st)
     );
     assert_eq!(result_invalid, None);
-}
 ```
 
 For more detailed examples, please refer to the documentation comments within the source code and the test files in the `tests/` directory.

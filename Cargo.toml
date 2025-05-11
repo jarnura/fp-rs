@@ -23,5 +23,5 @@ name = "compare"
 harness = false
 
 [features]
-default = []
-kind = []
+default = [] # HKT is now the default, no feature needed to enable it.
+legacy = []  # Optional feature to include legacy implementations.

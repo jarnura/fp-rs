@@ -1,4 +1,3 @@
-#![cfg(all(test, feature = "kind"))]
 
 use fp_rs::functor::hkt::Functor;
 use fp_rs::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker};

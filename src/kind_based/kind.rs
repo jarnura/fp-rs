@@ -1,4 +1,3 @@
-#![cfg(feature = "kind")]
 
 //! # Higher-Kinded Type (HKT) Infrastructure
 //!

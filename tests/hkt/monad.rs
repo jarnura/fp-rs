@@ -1,5 +1,3 @@
-#![cfg(all(test, feature = "kind"))]
-
 use fp_rs::monad::hkt::{Bind, Monad};
 use fp_rs::applicative::hkt::Applicative;
 use fp_rs::functor::hkt::Functor; // Import HKT Functor

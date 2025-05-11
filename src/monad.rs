@@ -1,68 +1,3 @@
-#[cfg(not(feature = "kind"))]
-mod classic {
-    use crate::{applicative::Applicative, apply::Apply};
-
-    pub trait Monad<A>: Applicative<A> + Bind<A> {}
-
-    impl<A: 'static> Monad<A> for Option<A> {}
-    impl<A: 'static, E: 'static + Clone> Monad<A> for Result<A, E> {}
-    impl<A: 'static + Clone> Monad<A> for Vec<A> {}
-
-    pub trait Bind<A>: Apply<A> {
-        type Bind<T>;
-        fn bind<B, F>(self, f: F) -> Self::Bind<B>
-        where
-            F: Fn(A) -> Self::Bind<B> + Clone + 'static;
-    }
-
-    impl<A: 'static> Bind<A> for Option<A> {
-        type Bind<T> = Option<T>;
-        fn bind<B, F>(self, f: F) -> Self::Bind<B>
-        where
-            F: Fn(A) -> Self::Bind<B> + 'static,
-        {
-            self.and_then(f)
-        }
-    }
-
-    impl<A: 'static, E: 'static + Clone> Bind<A> for Result<A, E> {
-        type Bind<T> = Result<T, E>;
-        fn bind<B, F>(self, f: F) -> Self::Bind<B>
-        where
-            F: Fn(A) -> Self::Bind<B> + 'static,
-        {
-            self.and_then(f)
-        }
-    }
-
-    impl<A: 'static + Clone> Bind<A> for Vec<A> {
-        type Bind<T> = Vec<T>;
-        fn bind<B, F>(self, f: F) -> Self::Bind<B>
-        where
-            F: Fn(A) -> Self::Bind<B> + 'static,
-        {
-            self.into_iter().flat_map(f).collect()
-        }
-    }
-
-    pub fn bind<A, B, MA, MB, F>(f: F, ma: MA) -> MB
-    where
-        F: Fn(A) -> MB + Clone + 'static,
-        MA: Bind<A, Bind<B> = MB>,
-    {
-        ma.bind::<B, F>(f)
-    }
-
-    pub fn join<A, M, MM>(mma: MM) -> M
-    where
-        M: Bind<A, Bind<A> = M> + 'static,
-        MM: Bind<M, Bind<A> = M>,
-    {
-        mma.bind::<A, _>(|x: M| x)
-    }
-}
-
-#[cfg(feature = "kind")]
 pub mod hkt {
     //! # Higher-Kinded Type (HKT) Monad and Bind
     //!
@@ -225,8 +160,8 @@ pub mod hkt {
     impl<A: 'static + Clone, B: 'static> Bind<A, B> for VecHKTMarker {
         /// For `Vec`, `bind` applies `func` to each element and flattens the results.
         /// This is equivalent to `Vec::into_iter().flat_map(func).collect()`.
-        fn bind(input: Self::Applied<A>, mut func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
-            input.into_iter().flat_map(|a| func(a)).collect()
+        fn bind(input: Self::Applied<A>, func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
+            input.into_iter().flat_map(func).collect()
         }
     }
 
@@ -393,9 +328,6 @@ pub mod hkt {
     // }
 }
 
-// Re-export based on feature flag
-#[cfg(not(feature = "kind"))]
-pub use classic::*;
-
-#[cfg(feature = "kind")]
-pub use hkt::{Bind, Monad, bind}; // join is now a method on Monad
+// Directly export HKT Bind, Monad, and helper bind
+pub use hkt::{Bind, Monad, bind};
+// Note: join is a method on the Monad trait in the hkt module.

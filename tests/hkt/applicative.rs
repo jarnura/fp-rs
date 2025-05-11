@@ -1,5 +1,3 @@
-#![cfg(all(test, feature = "kind"))]
-
 // Imports needed for the tests, adjusted from src/applicative.rs context
 use fp_rs::applicative::hkt::*; // For Applicative trait and lift_a1
 use fp_rs::apply::hkt::Apply;
@@ -153,7 +151,7 @@ fn result_hkt_applicative_law_homomorphism() {
 #[test]
 fn result_hkt_applicative_law_interchange() {
     type A = i32;
-    type B = String;
+    type B = String; // Restoring B for CFn<A,B> type hints
 
     let y_val: A = 10;
     
@@ -251,8 +249,8 @@ fn vec_hkt_applicative_law_homomorphism() {
     // pure(x): Vec<A> = vec![x]
     // pure(f_fn): Vec<CFn<A,B>> = vec![CFn(f_fn)]
     // pure(f(x)): Vec<B> = vec![f(x)]
-    let x: i32 = 10;
-    let f = |val: i32| val * 2; // A->B is i32->i32
+    // let x: i32 = 10; // Unused due to test being commented out
+    // let f = |val: i32| val * 2; // A->B is i32->i32 // Unused
     
     // let f_cfn_creator = || CFn::new(f);
     // let pure_f_cfn_vec: Vec<CFn<i32, i32>> = VecHKTMarker::pure(f_cfn_creator()); // Error E0277
@@ -276,7 +274,7 @@ fn vec_hkt_applicative_law_interchange() {
     // Let's test a simpler interpretation if possible, or acknowledge complexity.
 
     type A = i32;
-    type B = String;
+    // type B = String; // Unused in this specific test
 
     let y_val: A = 10; // A: Clone for pure(y)
     
@@ -562,7 +560,7 @@ fn cfn_once_hkt_functor_composition_via_map() {
 // --- ReaderTHKTMarker Applicative Laws ---
 // R = Env type for ReaderT, M = Inner Monad Marker
 type ReaderEnv = i32; // Using i32 as the environment for ReaderT
-type ReaderInnerMarker = IdentityHKTMarker; // Using Identity as the inner monad for simplicity
+// type ReaderInnerMarker = IdentityHKTMarker; // Using Identity as the inner monad for simplicity // Unused alias
 
 #[test]
 fn reader_t_hkt_applicative_law_identity() {

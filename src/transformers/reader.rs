@@ -1,156 +1,6 @@
 //! # ReaderT Monad Transformer
-// ... (classic comments largely applicable)
+// HKT version is now default.
 
-#[cfg(not(feature = "kind"))]
-mod classic {
-    use std::marker::PhantomData;
-    use std::rc::Rc;
-    use crate::applicative::Applicative;
-    use crate::apply::Apply;
-    use crate::functor::Functor;
-    use crate::identity::Identity;
-    use crate::monad::{Bind, Monad};
-
-    pub struct ReaderT<R, M, A> {
-        pub run_reader_t: Rc<dyn Fn(R) -> M + 'static>,
-        _phantom_a: PhantomData<A>,
-    }
-
-    impl<R, M, A> ReaderT<R, M, A> {
-        pub fn new<F>(f: F) -> Self
-        where
-            F: Fn(R) -> M + 'static,
-        {
-            ReaderT {
-                run_reader_t: Rc::new(f),
-                _phantom_a: PhantomData,
-            }
-        }
-    }
-
-    pub type Reader<R, A> = ReaderT<R, Identity<A>, A>;
-
-    impl<R, M, A> Functor<A> for ReaderT<R, M, A>
-    where
-        R: Clone + 'static,
-        M: Functor<A> + 'static,
-        A: 'static,
-    {
-        type Functor<BVal> = ReaderT<R, <M as Functor<A>>::Functor<BVal>, BVal>;
-        fn map<B, Func>(self, f: Func) -> Self::Functor<B>
-        where
-            Func: Fn(A) -> B + Clone + 'static,
-        {
-            let run_reader_t_clone = self.run_reader_t.clone();
-            ReaderT::new(move |env: R| {
-                let m_val = run_reader_t_clone(env);
-                m_val.map(f.clone())
-            })
-        }
-    }
-
-    impl<R, M, A> Apply<A> for ReaderT<R, M, A>
-    where
-        R: Clone + 'static,
-        M: Apply<A> + 'static,
-        A: 'static,
-    {
-        type Apply<TVal> = ReaderT<R, <M as Apply<A>>::Apply<TVal>, TVal>;
-        type Fnn<TArg, TRes> = <M as Apply<A>>::Fnn<TArg, TRes>;
-        fn apply<B>(self, i: <Self as Functor<A>>::Functor<Self::Fnn<A, B>>) -> Self::Apply<B>
-        where
-            Self: Sized,
-            B: 'static,
-            <Self as Functor<A>>::Functor<<Self as Apply<A>>::Fnn<A, B>>: 'static,
-        {
-            let self_run = self.run_reader_t.clone();
-            let i_run = i.run_reader_t.clone();
-            ReaderT::new(move |env: R| {
-                let m_val = self_run(env.clone());
-                let m_func = i_run(env);
-                m_val.apply(m_func)
-            })
-        }
-    }
-
-    impl<R, M, A> Applicative<A> for ReaderT<R, M, A>
-    where
-        R: Clone + 'static,
-        M: Applicative<A> + 'static,
-        A: Clone + 'static,
-        <M as Applicative<A>>::Applicative<A>: 'static,
-    {
-        type Applicative<TVal> = ReaderT<R, <M as Applicative<A>>::Applicative<TVal>, TVal>;
-        fn pure(v: A) -> Self::Applicative<A>
-        where
-            <M as Applicative<A>>::Applicative<A>: 'static,
-        {
-            ReaderT::new(move |_env: R| M::pure(v.clone()))
-        }
-    }
-
-    impl<R, M, A> Bind<A> for ReaderT<R, M, A>
-    where
-        R: Clone + 'static,
-        M: Bind<A> + 'static,
-        A: 'static,
-    {
-        type Bind<TVal> = ReaderT<R, <M as Bind<A>>::Bind<TVal>, TVal>;
-        fn bind<B, F>(self, f: F) -> Self::Bind<B>
-        where
-            F: Fn(A) -> Self::Bind<B> + Clone + 'static,
-        {
-            let self_run = self.run_reader_t.clone();
-            ReaderT::new(move |env: R| {
-                let m_a_val = self_run(env.clone());
-                let f_clone = f.clone();
-                m_a_val.bind(move |a_val: A| {
-                    let next_reader_t: Self::Bind<B> = f_clone(a_val);
-                    (next_reader_t.run_reader_t)(env.clone())
-                })
-            })
-        }
-    }
-
-    impl<R, M, A> Monad<A> for ReaderT<R, M, A>
-    where
-        R: Clone + 'static,
-        M: Monad<A> + 'static,
-        A: Clone + 'static,
-        <M as Applicative<A>>::Applicative<A>: 'static,
-    {}
-
-    pub trait MonadReader<REnv, AVal> where Self: Sized {
-        type SelfWithEnvAsValue;
-        fn ask() -> Self::SelfWithEnvAsValue where REnv: Clone + 'static, Self::SelfWithEnvAsValue: Sized;
-        fn local<FMapEnv>(map_env_fn: FMapEnv, computation: Self) -> Self
-        where REnv: 'static, AVal: 'static, FMapEnv: Fn(REnv) -> REnv + 'static;
-    }
-
-    impl<R, M, A> MonadReader<R, A> for ReaderT<R, M, A>
-    where
-        R: 'static,
-        A: 'static,
-        M: 'static,
-        M: Applicative<R>,
-        <M as Applicative<R>>::Applicative<R>: 'static,
-    {
-        type SelfWithEnvAsValue = ReaderT<R, <M as Applicative<R>>::Applicative<R>, R>;
-        fn ask() -> Self::SelfWithEnvAsValue where R: Clone + 'static {
-            ReaderT::new(move |env: R| M::pure(env.clone()))
-        }
-        fn local<FMapEnv>(map_env_fn: FMapEnv, computation: Self) -> Self
-        where FMapEnv: Fn(R) -> R + 'static {
-            let computation_run = computation.run_reader_t.clone();
-            ReaderT::new(move |current_env: R| {
-                let modified_env = map_env_fn(current_env);
-                computation_run(modified_env)
-            })
-        }
-    }
-}
-
-#[cfg(feature = "kind")]
 pub mod hkt {
     //! # Higher-Kinded Type (HKT) ReaderT Monad Transformer
     //!
@@ -174,7 +24,8 @@ pub mod hkt {
     //! ## Example
     //! ```
     //! use fp_rs::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader, Reader};
-    //! use fp_rs::kind_based::kind::{OptionHKTMarker, IdentityHKTMarker};
+    //! use fp_rs::kind_based::kind::OptionHKTMarker; // OptionHKTMarker from kind_based::kind
+    //! use fp_rs::IdentityHKTMarker; // IdentityHKTMarker re-exported from crate::identity
     //! use fp_rs::functor::hkt::Functor;
     //! use fp_rs::applicative::hkt::Applicative;
     //! use fp_rs::monad::hkt::{Bind, Monad};
@@ -192,20 +43,23 @@ pub mod hkt {
     //! type ConfigReaderOptionMarker = ReaderTHKTMarker<Config, OptionHKTMarker>;
     //!
     //! // 1. Using 'ask' to get the environment
-    //! let ask_for_greeting: ConfigReaderOption<String> = ConfigReaderOptionMarker::ask().map(|config: Config| {
-    //!     config.greeting
-    //! });
+    //! let ask_for_greeting_op: ConfigReaderOption<Config> = <ConfigReaderOptionMarker as MonadReader<Config, Config, OptionHKTMarker>>::ask();
+    //! let ask_for_greeting: ConfigReaderOption<String> = <ConfigReaderOptionMarker as Functor<Config, String>>::map(
+    //!     ask_for_greeting_op,
+    //!     |config: Config| config.greeting
+    //! );
     //! let config1 = Config { greeting: "Hello".to_string(), count: 5 };
     //! assert_eq!((ask_for_greeting.run_reader_t)(config1.clone()), Some("Hello".to_string()));
     //!
     //! // 2. Using 'pure' and 'map'
     //! let pure_val: ConfigReaderOption<i32> = ConfigReaderOptionMarker::pure(10);
-    //! let mapped_val: ConfigReaderOption<i32> = ConfigReaderOptionMarker::map(pure_val, |x| x * 2);
+    //! let mapped_val: ConfigReaderOption<i32> = <ConfigReaderOptionMarker as Functor<i32, i32>>::map(pure_val, |x| x * 2);
     //! assert_eq!((mapped_val.run_reader_t)(config1.clone()), Some(20));
     //!
     //! // 3. Using 'bind'
+    //! let ask_op_for_bind: ConfigReaderOption<Config> = <ConfigReaderOptionMarker as MonadReader<Config, Config, OptionHKTMarker>>::ask();
     //! let computation: ConfigReaderOption<String> = ConfigReaderOptionMarker::bind(
-    //!     ConfigReaderOptionMarker::ask(), // Gets Config
+    //!     ask_op_for_bind, // Gets Config
     //!     |config: Config| {
     //!         if config.count > 3 {
     //!             ConfigReaderOptionMarker::pure(format!("{} times {}", config.greeting, config.count))
@@ -231,6 +85,7 @@ pub mod hkt {
     //! // 5. Using 'join' (example with Reader<R, Reader<R, A>>)
     //! type SimpleReader<A> = Reader<Config, A>; // ReaderT<Config, IdentityHKTMarker, A>
     //! type SimpleReaderMarker = ReaderTHKTMarker<Config, IdentityHKTMarker>;
+    //! use fp_rs::HKT; // For HKT::Applied
     //!
     //! let val_in_id: <IdentityHKTMarker as HKT>::Applied<SimpleReader<String>> =
     //!     IdentityHKTMarker::pure(ReaderT::new(|cfg: Config| IdentityHKTMarker::pure(cfg.greeting)));
@@ -463,7 +318,8 @@ pub mod hkt {
         /// type ConfigReader<A> = ReaderT<MyConfig, OptionHKTMarker, A>;
         /// type ConfigReaderMarker = ReaderTHKTMarker<MyConfig, OptionHKTMarker>;
         ///
-        /// let get_config: ConfigReader<MyConfig> = ConfigReaderMarker::ask();
+        /// // Specify the type REnv and AVal for ask, which are both MyConfig here.
+        /// let get_config: ConfigReader<MyConfig> = <ConfigReaderMarker as MonadReader<MyConfig, MyConfig, OptionHKTMarker>>::ask();
         /// let env = MyConfig { id: 123 };
         /// assert_eq!((get_config.run_reader_t)(env.clone()), Some(env));
         /// ```
@@ -484,6 +340,7 @@ pub mod hkt {
         /// use fp_rs::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader};
         /// use fp_rs::kind_based::kind::OptionHKTMarker;
         /// use fp_rs::applicative::hkt::Applicative; // For pure
+        /// use fp_rs::functor::hkt::Functor; // For map
         ///
         /// #[derive(Clone, PartialEq, Debug)]
         /// struct MyConfig { prefix: String, value: i32 }
@@ -492,7 +349,9 @@ pub mod hkt {
         ///
         /// let initial_config = MyConfig { prefix: "Value: ".to_string(), value: 10 };
         ///
-        /// let get_value_str: ConfigReader<String> = ConfigReaderMarker::ask().map(
+        /// let get_value_str_op: ConfigReader<MyConfig> = <ConfigReaderMarker as MonadReader<MyConfig, MyConfig, OptionHKTMarker>>::ask();
+        /// let get_value_str: ConfigReader<String> = <ConfigReaderMarker as Functor<MyConfig, String>>::map(
+        ///     get_value_str_op,
         ///     |cfg: MyConfig| format!("{}{}", cfg.prefix, cfg.value)
         /// );
         ///
@@ -549,9 +408,5 @@ pub mod hkt {
 }
 
 
-// Re-export based on feature flag
-#[cfg(not(feature = "kind"))]
-pub use classic::{ReaderT, Reader, MonadReader};
-
-#[cfg(feature = "kind")]
+// Directly export HKT versions
 pub use hkt::{ReaderT, Reader, ReaderTHKTMarker, MonadReader};

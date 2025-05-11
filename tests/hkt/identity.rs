@@ -1,5 +1,3 @@
-#![cfg(all(test, feature = "kind"))] // Ensure these run only when 'kind' IS active
-
 // Original imports from src/identity.rs hkt_tests module, adjusted
 use fp_rs::identity::{Identity, IdentityHKTMarker}; // Assuming these are re-exported
 use fp_rs::functor::hkt::Functor;

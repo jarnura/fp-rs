@@ -242,7 +242,7 @@ impl<PA: Strong<S, T>, PB: Strong<A, B>, S: 'static, T: 'static, A: 'static, B: 
 ///
 /// # Parameters
 /// - `lens`: The `AGetter<S, T, A, B>` used to focus on the part `A`.
-///           `T` and `B` are typically phantom.
+///   `T` and `B` are typically phantom.
 /// - `s`: The structure `S` from which to extract the part.
 ///
 /// # Returns
@@ -389,8 +389,8 @@ where
 /// # Parameters
 /// - `s2a`: A "getter" function `S -> A` that extracts the part `A` from the whole `S`.
 /// - `s2b2t`: A "setter" function `S -> (B -> T)`. It takes the original whole `S`,
-///            returns a new function that takes the new part `B` and produces the new whole `T`.
-///            `S` must be `Copy` because it's used by both the getter and to capture in the setter closure.
+///   returns a new function that takes the new part `B` and produces the new whole `T`.
+///   `S` must be `Copy` because it's used by both the getter and to capture in the setter closure.
 ///
 /// # Returns
 /// A `Lens<PO, PI, S, T, A, B>`. The profunctor types `PO` and `PI` are usually inferred.

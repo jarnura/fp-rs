@@ -1,59 +1,7 @@
 //! # Identity Monad
-// Classic comments remain largely applicable.
+// HKT version is now default.
+// Classic comments might still offer some insight but primary focus is HKT.
 
-#[cfg(not(feature = "kind"))]
-mod classic {
-    use crate::functor::Functor;
-    use crate::apply::Apply;
-    use crate::applicative::Applicative;
-    use crate::monad::{Bind, Monad};
-    use crate::function::CFn;
-
-    #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
-    pub struct Identity<A>(pub A);
-
-    impl<A> Functor<A> for Identity<A> {
-        type Functor<BVal> = Identity<BVal>;
-        fn map<B, F>(self, mut f: F) -> Self::Functor<B>
-        where
-            F: FnMut(A) -> B + 'static,
-        {
-            Identity(f(self.0))
-        }
-    }
-
-    impl<A: 'static> Apply<A> for Identity<A> {
-        type Apply<T> = Identity<T>;
-        type Fnn<T, U> = CFn<T, U>;
-        fn apply<B>(self, i: Identity<Self::Fnn<A, B>>) -> Identity<B>
-        where
-            Self: Sized,
-        {
-            Identity(i.0.call(self.0))
-        }
-    }
-
-    impl<A: 'static> Applicative<A> for Identity<A> {
-        type Applicative<T> = Identity<T>;
-        fn pure(v: A) -> Self::Applicative<A> {
-            Identity(v)
-        }
-    }
-
-    impl<A: 'static> Bind<A> for Identity<A> {
-        type Bind<T> = Identity<T>;
-        fn bind<B, F>(self, f: F) -> Self::Bind<B>
-        where
-            F: Fn(A) -> Self::Bind<B> + 'static,
-        {
-            f(self.0)
-        }
-    }
-
-    impl<A: 'static> Monad<A> for Identity<A> {}
-}
-
-#[cfg(feature = "kind")]
 pub mod hkt {
     //! # Higher-Kinded Type (HKT) Identity Monad
     //!
@@ -93,7 +41,7 @@ pub mod hkt {
     //! assert_eq!(joined_id, Identity(100));
     //! ```
 
-    use crate::kind_based::kind::{HKT, HKT1}; // HKT1 for the blanket impl
+    use crate::kind_based::kind::HKT;
     use crate::functor::hkt as functor_hkt;
     use crate::apply::hkt as apply_hkt;
     use crate::applicative::hkt as applicative_hkt;
@@ -191,14 +139,7 @@ pub mod hkt {
     }
 }
 
-// Re-export based on feature flag
-#[cfg(not(feature = "kind"))]
-pub use classic::Identity;
-
-#[cfg(feature = "kind")]
+// Directly export HKT Identity and its marker
 pub use hkt::{Identity, IdentityHKTMarker};
 
-// Ensure HKT1 is in scope for the blanket impl.
-// This is usually handled by `use crate::kind_based::kind::HKT1;`
-// in modules that define HKT markers, but good to be mindful.
-// The `hkt` module itself imports HKT1.
+// Note: HKT1 is imported within the hkt module.
