@@ -4,20 +4,21 @@
 
 // Module declarations
 
-/// Provides the HKT `Applicative` trait and its implementations.
+
+/// Provides the Kind-based `Applicative` trait and its implementations for the `monadify` library.
 pub mod applicative;
-/// Provides the HKT `Apply` trait (an extension of `Functor`) and its implementations.
+/// Provides the Kind-based `Apply` trait (an extension of `Functor`) and its implementations.
 pub mod apply;
 /// Defines `CFn` and `CFnOnce` for heap-allocated, callable function wrappers.
 pub mod function;
-/// Provides the HKT `Functor` trait and its implementations.
+/// Provides the Kind-based `Functor` trait and its implementations.
 pub mod functor;
-/// Defines the `Identity` monad and its HKT marker.
-pub mod identity; // Added
-/// Core infrastructure for Higher-Kinded Types (HKTs), including `HKT` and `HKT1` traits,
-/// and various HKT marker types (e.g., `OptionHKTMarker`).
-pub mod kind_based; // No longer cfg-gated
-/// Provides the HKT `Monad` and `Bind` traits and their implementations.
+/// Defines the `Identity` monad and its Kind marker.
+pub mod identity;
+/// Core infrastructure for Kind-based programming (Higher-Kinded Types), including `Kind` and `Kind1` traits,
+/// and various Kind marker types (e.g., `OptionKind`).
+pub mod kind_based;
+/// Provides the Kind-based `Monad` and `Bind` traits and their implementations.
 pub mod monad;
 /// Implements `Profunctor`, `Strong`, and `Choice` traits, primarily for function types.
 pub mod profunctor;
@@ -26,34 +27,33 @@ pub mod transformers;
 /// Utility functions and macros, including `fn0!`, `fn1!`, etc.
 pub mod utils;
 
-/// Contains legacy (non-HKT, associated type-based) implementations of functional traits.
+/// Contains legacy (non-Kind-based, associated type-based) implementations of functional traits.
 /// This module is only available when the `legacy` feature is enabled.
 #[cfg(feature = "legacy")]
-pub mod legacy; // Added legacy module
+pub mod legacy;
 
-// Public re-exports of core traits (now default to HKT versions)
-pub use applicative::Applicative;
-pub use apply::Apply;
-pub use functor::Functor;
-pub use monad::{Bind, Monad}; // Assuming HKT Monad will be re-exported from monad.rs
+// Public re-exports of core traits (now default to Kind-based versions)
+pub use applicative::Applicative; // Points to applicative::kind::Applicative
+pub use apply::Apply;             // Points to apply::kind::Apply
+pub use functor::Functor;         // Points to functor::kind::Functor
+pub use monad::{Bind, Monad};     // Points to monad::kind::Bind and monad::kind::Monad
 pub use profunctor::{Choice, Profunctor, Strong};
-pub use transformers::reader::MonadReader; // Added
+pub use transformers::reader::MonadReader; // Points to transformers::reader::kind::MonadReader
 
 // Public re-exports of key structs/types (optional, but can be convenient)
 pub use function::{CFn, CFnOnce};
-pub use identity::Identity; // This now points to HKT Identity
-pub use transformers::reader::{ReaderT, Reader}; // This now points to HKT ReaderT and Reader alias
+pub use identity::Identity; // Points to identity::kind::Identity
+pub use transformers::reader::{ReaderT, Reader}; // Points to transformers::reader::kind::ReaderT etc.
 
-// Re-export HKT markers by default
+// Re-export Kind markers and core Kind traits by default
 pub use kind_based::kind::{
-    HKT, HKT1, // Core HKT traits
-    OptionHKTMarker, ResultHKTMarker, VecHKTMarker, 
-    CFnHKTMarker, CFnOnceHKTMarker
+    Kind, Kind1, // Core Kind traits
+    OptionKind, ResultKind, VecKind,
+    CFnKind, CFnOnceKind
 };
-pub use crate::identity::IdentityHKTMarker;
-pub use crate::transformers::reader::ReaderTHKTMarker;
-// Note: ReaderTHKTMarker was not previously re-exported, adding it.
-// Reader alias is now re-exported above.
+pub use crate::identity::IdentityKind; // Changed from IdentityHKTMarker
+pub use crate::transformers::reader::ReaderTKind; // Changed from ReaderTHKTMarker
+// Reader alias is re-exported above.
 
 // Note on macros:
 // Macros defined with `#[macro_export]` in submodules (like `utils.rs`) are
