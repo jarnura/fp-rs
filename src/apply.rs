@@ -1,32 +1,32 @@
-pub mod hkt {
-    //! # Higher-Kinded Type (HKT) Apply
+pub mod kind { // Renamed from hkt to kind
+    //! # Kind-based Apply for the `monadify` library
     //!
-    //! This module defines the `Apply` trait for HKTs, which extends `Functor`.
+    //! This module defines the `Apply` trait for Kind-encoded types, which extends `Functor`.
     //! `Apply` provides the `apply` method (often denoted as `<*>`), allowing sequential
-    //! application of a wrapped function to a wrapped value.
+    //! application of a Kind-wrapped function to a Kind-wrapped value.
     //!
-    //! If you have `F<A>` (a wrapped value) and `F<A -> B>` (a wrapped function),
-    //! `apply` combines them to produce `F<B>`.
+    //! If you have `F::Of<A>` (a wrapped value) and `F::Of<A -> B>` (a wrapped function),
+    //! `apply` combines them to produce `F::Of<B>`.
     //!
-    //! The HKT `Apply` trait is generic over:
-    //! - `Self`: The HKT marker (e.g., [`OptionHKTMarker`]).
-    //! - `A`: The input type of the function `A -> B` and the type of value in `Self::Applied<A>`.
-    //! - `B`: The output type of the function `A -> B` and the type of value in `Self::Applied<B>`.
+    //! The `Apply` trait is generic over:
+    //! - `Self`: The Kind marker (e.g., [`OptionKind`]).
+    //! - `A`: The input type of the function `A -> B` and the type of value in `Self::Of<A>`.
+    //! - `B`: The output type of the function `A -> B` and the type of value in `Self::Of<B>`.
 
     use crate::function::{CFn, CFnOnce};
-    use crate::functor::{Functor}; // HKT Functor
+    use crate::functor::{Functor}; // Kind-based Functor
     use crate::kind_based::kind::{
-        HKT, HKT1, OptionHKTMarker, VecHKTMarker, ResultHKTMarker, CFnHKTMarker, CFnOnceHKTMarker
+        Kind, Kind1, OptionKind, VecKind, ResultKind, CFnKind, CFnOnceKind
     };
 
-    /// Represents an HKT that can apply a wrapped function to a wrapped value.
+    /// Represents a Kind-encoded type that can apply a wrapped function to a wrapped value.
     ///
-    /// `Self` refers to the HKT marker type (e.g., [`OptionHKTMarker`]) that implements
-    /// [`HKT1`] and [`Functor`].
+    /// `Self` refers to the Kind marker type (e.g., [`OptionKind`]) that implements
+    /// [`Kind1`] and [`Functor`].
     ///
-    /// The `apply` method takes `Self::Applied<A>` (e.g., `Option<A>`) and
-    /// `Self::Applied<CFn<A, B>>` (e.g., `Option<CFn<A, B>>`), and produces
-    /// `Self::Applied<B>` (e.g., `Option<B>`).
+    /// The `apply` method takes `Self::Of<A>` (e.g., `Option<A>`) and
+    /// `Self::Of<CFn<A, B>>` (e.g., `Option<CFn<A, B>>`), and produces
+    /// `Self::Of<B>` (e.g., `Option<B>`).
     ///
     /// ## Apply Laws
     /// (Often defined in terms of `Applicative` which builds on `Apply`)
@@ -36,54 +36,54 @@ pub mod hkt {
     /// More commonly, laws are expressed with `Applicative`.
     pub trait Apply<A, B>: Functor<A, B>
     where
-        Self: Sized + HKT1,
+        Self: Sized + Kind1, // Changed HKT1 to Kind1
         A: 'static,
         B: 'static,
     {
-        /// Applies a function wrapped in an HKT structure to a value wrapped in the same HKT structure.
+        /// Applies a function wrapped in a Kind structure to a value wrapped in the same Kind structure.
         ///
         /// # Type Parameters
-        /// - `Self`: The HKT marker.
+        /// - `Self`: The Kind marker.
         /// - `A`: The input type for the wrapped function `CFn<A, B>`.
-        /// - `B`: The result type of the wrapped function and the output HKT structure.
+        /// - `B`: The result type of the wrapped function and the output Kind structure.
         ///
         /// # Parameters
-        /// - `value_container`: The HKT-structured value `Self::Applied<A>`.
-        /// - `function_container`: The HKT-structured function `Self::Applied<CFn<A, B>>`.
+        /// - `value_container`: The Kind-structured value `Self::Of<A>`.
+        /// - `function_container`: The Kind-structured function `Self::Of<CFn<A, B>>`.
         ///   Note: The function itself is wrapped in [`CFn`], which handles dynamic dispatch
         ///   and necessary `'static` bounds for the function it wraps.
         ///
         /// # Returns
-        /// A new HKT-structured value `Self::Applied<B>`.
+        /// A new Kind-structured value `Self::Of<B>`.
         fn apply(
-            value_container: Self::Applied<A>,
-            function_container: Self::Applied<CFn<A, B>>,
-        ) -> Self::Applied<B>;
+            value_container: Self::Of<A>,       // Changed Applied to Of
+            function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
+        ) -> Self::Of<B>;                        // Changed Applied to Of
     }
 
-    impl<A: 'static, B: 'static> Apply<A, B> for OptionHKTMarker {
+    impl<A: 'static, B: 'static> Apply<A, B> for OptionKind { // Changed OptionHKTMarker to OptionKind
         fn apply(
-            value_container: Self::Applied<A>,
-            function_container: Self::Applied<CFn<A, B>>,
-        ) -> Self::Applied<B> {
+            value_container: Self::Of<A>,       // Changed Applied to Of
+            function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
+        ) -> Self::Of<B> {                        // Changed Applied to Of
             value_container.and_then(|val_a| function_container.map(|func_ab| func_ab.call(val_a)))
         }
     }
 
-    impl<A: 'static, B: 'static, E: 'static + Clone> Apply<A, B> for ResultHKTMarker<E> {
+    impl<A: 'static, B: 'static, E: 'static + Clone> Apply<A, B> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
         fn apply(
-            value_container: Self::Applied<A>,
-            function_container: Self::Applied<CFn<A, B>>,
-        ) -> Self::Applied<B> {
+            value_container: Self::Of<A>,       // Changed Applied to Of
+            function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
+        ) -> Self::Of<B> {                        // Changed Applied to Of
             value_container.and_then(|val_a| function_container.map(|func_ab| func_ab.call(val_a)))
         }
     }
 
-    impl<A: 'static + Clone, B: 'static> Apply<A, B> for VecHKTMarker {
+    impl<A: 'static + Clone, B: 'static> Apply<A, B> for VecKind { // Changed VecHKTMarker to VecKind
         fn apply(
-            value_container: Self::Applied<A>,
-            function_container: Self::Applied<CFn<A, B>>,
-        ) -> Self::Applied<B> {
+            value_container: Self::Of<A>,       // Changed Applied to Of
+            function_container: Self::Of<CFn<A, B>>, // Changed Applied to Of
+        ) -> Self::Of<B> {                        // Changed Applied to Of
             function_container
                 .into_iter()
                 .flat_map(|f_fn| {
@@ -95,111 +95,101 @@ pub mod hkt {
         }
     }
     
-    // Apply for CFnHKTMarker<X>
-    // F::Applied<A> is CFn<X, A>
-    // F::Applied<CFn<A, B>> is CFn<X, CFn<A, B>>
+    // Apply for CFnKind<X>
+    // F::Of<A> is CFn<X, A>
+    // F::Of<CFn<A, B>> is CFn<X, CFn<A, B>>
     // Result is CFn<X, B>
     // This implements S f g x = (f x) (g x)
-    impl<X, A, B> Apply<A, B> for CFnHKTMarker<X>
+    impl<X, A, B> Apply<A, B> for CFnKind<X> // Changed CFnHKTMarker to CFnKind
     where
         X: 'static + Clone, // Clone for x_val in the closure
         A: 'static,
         B: 'static,
         Self: Functor<A, B>, // Ensure Functor constraint is met
-        Self: HKT<Applied<A> = CFn<X, A>>,
-        Self: HKT<Applied<CFn<A, B>> = CFn<X, CFn<A, B>>>,
-        Self: HKT<Applied<B> = CFn<X, B>>,
+        Self: Kind<Of<A> = CFn<X, A>>, // HKT -> Kind, Applied -> Of
+        Self: Kind<Of<CFn<A, B>> = CFn<X, CFn<A, B>>>, // HKT -> Kind, Applied -> Of
+        Self: Kind<Of<B> = CFn<X, B>>, // HKT -> Kind, Applied -> Of
         // Removed: CFn<X, CFn<A, B>>: Fn(X) -> CFn<A, B>,
         // Removed: CFn<X, A>: Fn(X) -> A,
         // The .call method on CFn struct does not require CFn itself to be Fn.
         // A: 'static is from Apply trait. X: 'static + Clone for closure. B: 'static from Apply trait.
     {
         fn apply(
-            value_container: Self::Applied<A>, // This is c_x_a
-            function_container: Self::Applied<CFn<A, B>>, // This is c_x_fab
-        ) -> Self::Applied<B> {
-            // Self::Applied<A> is CFn<X, A>
-            // Self::Applied<CFn<A, B>> is CFn<X, CFn<A, B>>
+            value_container: Self::Of<A>, // This is c_x_a. Applied -> Of
+            function_container: Self::Of<CFn<A, B>>, // This is c_x_fab. Applied -> Of
+        ) -> Self::Of<B> { // Applied -> Of
+            // Self::Of<A> is CFn<X, A>
+            // Self::Of<CFn<A, B>> is CFn<X, CFn<A, B>>
             CFn::new(move |x_val: X| {
-                let func_ab = function_container.call(x_val.clone()); 
+                let func_ab = function_container.call(x_val.clone());
                 let val_a = value_container.call(x_val);
                 func_ab.call(val_a)
             })
         }
     }
 
-    // Apply for CFnOnceHKTMarker<X>
-    // Similar to CFnHKTMarker, but uses call_once and produces CFnOnce
-    impl<X, A, B> Apply<A, B> for CFnOnceHKTMarker<X>
+    // Apply for CFnOnceKind<X>
+    // Similar to CFnKind, but uses call_once and produces CFnOnce
+    impl<X, A, B> Apply<A, B> for CFnOnceKind<X> // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         X: 'static + Clone, // Clone for x_val in the closure
         A: 'static,
         B: 'static,
         Self: Functor<A, B>,
-        Self: HKT<Applied<A> = CFnOnce<X, A>>,
-        Self: HKT<Applied<CFn<A, B>> = CFnOnce<X, CFn<A, B>>>, // Assuming the function container holds CFn<A,B>
-        Self: HKT<Applied<B> = CFnOnce<X, B>>,
-        // Removed FnOnce bounds on GATs. The .call_once method is inherent.
-        // <Self as HKT>::Applied<CFn<A, B>>: FnOnce(X) -> CFn<A, B>,
-        // <Self as HKT>::Applied<A>: FnOnce(X) -> A,
-        // A: 'static from Apply trait. X: 'static + Clone for closure. B: 'static from Apply trait.
-        // For now, let's assume CFn<A,B> can be called via call_once if it's the last use.
-        // The compiler error E0599 for call_once on CFnOnceHKTMarker::Applied<CFn<A,B>>
-        // indicates that the GAT itself needs to satisfy FnOnce(X) -> CFn<A,B>.
-        // And for CFnOnceHKTMarker::Applied<A>, it needs FnOnce(X) -> A.
-        // The inner func_ab.call_once(val_a) implies CFn<A,B>: FnOnce(A) -> B.
-        // CFn already implements Fn, FnMut, and FnOnce if the inner Box<dyn Fn...> does.
-        // The issue is that the GAT Self::Applied<CFn<A,B>> is opaque.
+        Self: Kind<Of<A> = CFnOnce<X, A>>, // HKT -> Kind, Applied -> Of
+        Self: Kind<Of<CFn<A, B>> = CFnOnce<X, CFn<A, B>>>, // HKT -> Kind, Applied -> Of
+        Self: Kind<Of<B> = CFnOnce<X, B>>, // HKT -> Kind, Applied -> Of
+        // Comments about FnOnce bounds and GATs remain relevant.
     {
         fn apply(
-            value_container: Self::Applied<A>, // CFnOnce<X,A>
-            function_container: Self::Applied<CFn<A, B>>, // CFnOnce<X, CFn<A,B>>
-        ) -> Self::Applied<B> { // CFnOnce<X,B>
+            value_container: Self::Of<A>, // CFnOnce<X,A>. Applied -> Of
+            function_container: Self::Of<CFn<A, B>>, // CFnOnce<X, CFn<A,B>>. Applied -> Of
+        ) -> Self::Of<B> { // CFnOnce<X,B>. Applied -> Of
             CFnOnce::new(move |x_val: X| {
-                // Self::Applied<CFn<A,B>> is CFnOnce<X, CFn<A,B>>
-                // Self::Applied<A> is CFnOnce<X,A>
+                // Self::Of<CFn<A,B>> is CFnOnce<X, CFn<A,B>>
+                // Self::Of<A> is CFnOnce<X,A>
                 let func_ab = function_container.call_once(x_val.clone()); // func_ab is CFn<A,B>
                 let val_a = value_container.call_once(x_val);             // val_a is A
-                func_ab.call(val_a) // Changed to .call(val_a) from .call_once((val_a,))
+                func_ab.call(val_a)
             })
         }
     }
 
 
-    /// Lifts a binary curried function to operate on HKT contexts.
+    /// Lifts a binary curried function to operate on Kind-encoded contexts.
     ///
     /// Given `func: A -> (B -> C)` (represented as `A -> CFn<B, C>`),
-    /// `fa: F<A>`, and `fb: F<B>`, `lift2` produces `F<C>`.
+    /// `fa: F::Of<A>`, and `fb: F::Of<B>`, `lift2` produces `F::Of<C>`.
     /// It's equivalent to `apply(map(fa, func), fb)` but expressed using the `Apply` trait's `apply` method.
     pub fn lift2<F, A, B, C, FuncImpl>(
         func: FuncImpl, // A -> CFn<B, C>
-        fa: F::Applied<A>,
-        fb: F::Applied<B>,
-    ) -> F::Applied<C>
+        fa: F::Of<A>,   // Changed Applied to Of
+        fb: F::Of<B>,   // Changed Applied to Of
+    ) -> F::Of<C>       // Changed Applied to Of
     where
-        F: Apply<B, C> + Functor<A, CFn<B, C>> + HKT1, 
-        FuncImpl: Fn(A) -> CFn<B, C> + Clone + 'static, 
+        F: Apply<B, C> + Functor<A, CFn<B, C>> + Kind1, // Changed HKT1 to Kind1
+        FuncImpl: Fn(A) -> CFn<B, C> + Clone + 'static,
         A: 'static, B: 'static, C: 'static,
     {
-        let f_b_to_c_in_f = F::map(fa, func); 
-        F::apply(fb, f_b_to_c_in_f)           
+        let f_b_to_c_in_f = F::map(fa, func);
+        F::apply(fb, f_b_to_c_in_f)
     }
 
-    /// Lifts a ternary curried function to operate on HKT contexts.
+    /// Lifts a ternary curried function to operate on Kind-encoded contexts.
     ///
     /// Given `func: A -> (B -> (C -> D))` (represented as `A -> CFn<B, CFn<C, D>>`),
-    /// `fa: F<A>`, `fb: F<B>`, and `fc: F<C>`, `lift3` produces `F<D>`.
+    /// `fa: F::Of<A>`, `fb: F::Of<B>`, and `fc: F::Of<C>`, `lift3` produces `F::Of<D>`.
     pub fn lift3<F, A, B, C, D, FuncImpl>(
         func: FuncImpl, // A -> CFn<B, CFn<C, D>>
-        fa: F::Applied<A>,
-        fb: F::Applied<B>,
-        fc: F::Applied<C>,
-    ) -> F::Applied<D>
+        fa: F::Of<A>,   // Changed Applied to Of
+        fb: F::Of<B>,   // Changed Applied to Of
+        fc: F::Of<C>,   // Changed Applied to Of
+    ) -> F::Of<D>       // Changed Applied to Of
     where
-        F: Apply<C, D>             
-           + Apply<B, CFn<C,D>>    
+        F: Apply<C, D>
+           + Apply<B, CFn<C,D>>
            + Functor<A, CFn<B, CFn<C,D>>>
-           + HKT1,
+           + Kind1, // Changed HKT1 to Kind1
         FuncImpl: Fn(A) -> CFn<B, CFn<C, D>> + Clone + 'static,
         A: 'static, B: 'static, C: 'static, D: 'static,
     {
@@ -208,36 +198,36 @@ pub mod hkt {
         <F as Apply<C,D>>::apply(fc, f_c_to_d_in_f)
     }
 
-    /// Combines two HKT actions, keeping only the result of the first.
+    /// Combines two Kind-encoded actions, keeping only the result of the first.
     /// Often denoted as `<*`.
     pub fn apply_first<F, A, B>(
-        fa: F::Applied<A>,
-        fb: F::Applied<B>,
-    ) -> F::Applied<A>
+        fa: F::Of<A>, // Changed Applied to Of
+        fb: F::Of<B>, // Changed Applied to Of
+    ) -> F::Of<A>     // Changed Applied to Of
     where
-        F: Apply<B, A> + Functor<A, CFn<B, A>> + HKT1,
-        A: Copy + 'static, 
-        B: 'static,        
+        F: Apply<B, A> + Functor<A, CFn<B, A>> + Kind1, // Changed HKT1 to Kind1
+        A: Copy + 'static,
+        B: 'static,
     {
-        let map_fn = |x: A| CFn::new(move |_y: B| x); 
+        let map_fn = |x: A| CFn::new(move |_y: B| x);
         lift2::<F, A, B, A, _>(map_fn, fa, fb)
     }
 
-    /// Combines two HKT actions, keeping only the result of the second.
+    /// Combines two Kind-encoded actions, keeping only the result of the second.
     /// Often denoted as `*>`.
     pub fn apply_second<F, A, B>(
-        fa: F::Applied<A>,
-        fb: F::Applied<B>,
-    ) -> F::Applied<B>
+        fa: F::Of<A>, // Changed Applied to Of
+        fb: F::Of<B>, // Changed Applied to Of
+    ) -> F::Of<B>     // Changed Applied to Of
     where
-        F: Apply<B, B> + Functor<A, CFn<B, B>> + HKT1,
-        A: 'static, 
-        B: Copy + 'static, 
+        F: Apply<B, B> + Functor<A, CFn<B, B>> + Kind1, // Changed HKT1 to Kind1
+        A: 'static,
+        B: Copy + 'static,
     {
-        let map_fn = |_: A| CFn::new(|y: B| y); 
+        let map_fn = |_: A| CFn::new(|y: B| y);
         lift2::<F, A, B, B, _>(map_fn, fa, fb)
     }
 }
 
-// Directly export HKT Apply and related functions
-pub use hkt::*;
+// Directly export Kind-based Apply and related functions
+pub use kind::*; // Renamed from hkt to kind

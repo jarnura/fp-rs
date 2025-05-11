@@ -1,118 +1,117 @@
-pub mod hkt {
-    //! # Higher-Kinded Type (HKT) Functor
+pub mod kind { // Renamed from hkt to kind to align with the Kind trait
+    //! # Kind-based Functor for the `monadify` library
     //!
-    //! This module defines the `Functor` trait for types that implement the HKT pattern.
-    //! A Functor is a type constructor `F` that supports a `map` operation, allowing
-    //! a function `A -> B` to be applied to a value(s) within a structure `F<A>`,
-    //! resulting in a structure `F<B>`.
+    //! This module defines the `Functor` trait for types that implement the Kind pattern.
+    //! A Functor is a type constructor `F` (represented by a `Kind` marker)
+    //! that supports a `map` operation. This operation allows a function `A -> B`
+    //! to be applied to a value or values within a structure `F::Of<A>` (e.g., `Option<A>`),
+    //! resulting in a new structure `F::Of<B>` (e.g., `Option<B>`).
     //!
-    //! The HKT `Functor` trait is generic over:
-    //! - `Self`: The HKT marker (e.g., [`OptionHKTMarker`]).
-    //! - `A`: The input type of the value(s) within the HKT structure.
+    //! The `Functor` trait is generic over:
+    //! - `Self`: The Kind marker (e.g., [`OptionKind`]).
+    //! - `A`: The input type of the value(s) within the Kind-encoded structure.
     //! - `B`: The output type after applying the mapping function.
     //!
-    //! It relies on the [`HKT1`] trait from `crate::kind_based::kind` to relate the
-    //! marker `Self` to its concrete type application `Self::Applied<T>`.
+    //! It relies on the [`Kind1`] trait from `crate::kind_based::kind` to relate the
+    //! marker `Self` to its concrete type application `Self::Of<T>`.
 
-    use crate::kind_based::kind::{HKT1, OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker};
+    use crate::kind_based::kind::{Kind1, OptionKind, ResultKind, VecKind, CFnKind, CFnOnceKind};
     use crate::function::{CFn, CFnOnce};
 
-    /// Represents a type constructor that can be mapped over, using the HKT pattern.
+    /// Represents a type constructor that can be mapped over, using the Kind pattern.
     ///
-    /// `Self` refers to the HKT marker type (e.g., [`OptionHKTMarker`], [`VecHKTMarker`])
-    /// that implements [`HKT1`].
+    /// `Self` refers to the Kind marker type (e.g., [`OptionKind`], [`VecKind`])
+    /// that implements [`Kind1`].
     ///
-    /// The `map` operation takes an instance of `Self::Applied<A>` (e.g., `Option<A>`)
-    /// and a function `A -> B`, producing `Self::Applied<B>` (e.g., `Option<B>`).
+    /// The `map` operation takes an instance of `Self::Of<A>` (e.g., `Option<A>`)
+    /// and a function `A -> B`, producing `Self::Of<B>` (e.g., `Option<B>`).
     ///
     /// ## Functor Laws
     /// Implementors must satisfy two laws:
-    /// 1.  **Identity**: For any HKT marker `F` and value `x: F::Applied<A>`,
+    /// 1.  **Identity**: For any Kind marker `F` and value `x: F::Of<A>`,
     ///     `F::map(x, |a| a) == x`.
-    /// 2.  **Composition**: For any HKT marker `F`, value `x: F::Applied<A>`, and functions
+    /// 2.  **Composition**: For any Kind marker `F`, value `x: F::Of<A>`, and functions
     ///     `f: A -> B`, `g: B -> C`,
     ///     `F::map(F::map(x, f), g) == F::map(x, |a| g(f(a)))`.
-    pub trait Functor<A, B>: HKT1 { // A is input type, B is output type for map
-        /// Applies a function to a value (or values) within an HKT-encoded structure.
+    pub trait Functor<A, B>: Kind1 { // A is input type, B is output type for map
+        /// Applies a function to a value (or values) within a Kind-encoded structure.
         ///
         /// # Type Parameters
-        /// - `Self`: The HKT marker (e.g., [`OptionHKTMarker`]).
-        /// - `A`: The type of the value(s) inside the input structure `Self::Applied<A>`.
-        /// - `B`: The type of the value(s) inside the output structure `Self::Applied<B>`.
+        /// - `Self`: The Kind marker (e.g., [`OptionKind`]).
+        /// - `A`: The type of the value(s) inside the input structure `Self::Of<A>`.
+        /// - `B`: The type of the value(s) inside the output structure `Self::Of<B>`.
         ///
         /// # Parameters
-        /// - `input`: The HKT-structured value, e.g., `Option<A>`, `Vec<A>`.
+        /// - `input`: The Kind-structured value, e.g., `Option<A>`, `Vec<A>`.
         /// - `func`: A function to apply to the inner value(s).
         ///   The `FnMut(A) -> B + Clone + 'static` bound is chosen for broad compatibility:
         ///   - `FnMut`: Allows mutation of captured state if needed, and covers `Fn` and `FnOnce`
         ///     that don't consume their captures by value on first call. Standard library `map`
         ///     methods (like `Option::map`, `Result::map`) often take `FnOnce`.
-        ///   - `Clone`: Necessary for some implementations like [`CFnHKTMarker`], where the
+        ///   - `Clone`: Necessary for some implementations like [`CFnKind`], where the
         ///     function might need to be cloned if the resulting structure can be "called"
         ///     multiple times.
         ///   - `'static`: Often required when functions are stored or returned within structures
         ///     like [`CFn`] or [`CFnOnce`], especially if they don't borrow from the local scope.
         ///
         /// # Returns
-        /// A new HKT-structured value `Self::Applied<B>` containing the result(s) of
+        /// A new Kind-structured value `Self::Of<B>` containing the result(s) of
         /// applying `func`.
-        fn map(input: Self::Applied<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Applied<B>;
+        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B>;
     }
 
-    impl<A, B> Functor<A, B> for OptionHKTMarker {
-        fn map(input: Self::Applied<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Applied<B> {
+    impl<A, B> Functor<A, B> for OptionKind {
+        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B> {
             input.map(func) // Option::map takes FnOnce, FnMut is compatible
         }
     }
 
-    impl<A, B, E> Functor<A, B> for ResultHKTMarker<E> {
-        fn map(input: Self::Applied<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Applied<B> {
+    impl<A, B, E> Functor<A, B> for ResultKind<E> {
+        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B> {
             input.map(func) // Result::map takes FnOnce, FnMut is compatible
         }
     }
 
-    impl<A, B> Functor<A, B> for VecHKTMarker {
-        fn map(input: Self::Applied<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Applied<B> {
+    impl<A, B> Functor<A, B> for VecKind {
+        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B> {
             input.into_iter().map(func).collect()
         }
     }
 
-    // Functor impl for CFnHKTMarker (maps over the output type of CFn)
+    // Functor impl for CFnKind (maps over the output type of CFn)
     // A is the original output type, B is the new output type
-    impl<X, A, B> Functor<A, B> for CFnHKTMarker<X>
+    impl<X, A, B> Functor<A, B> for CFnKind<X>
     where
-        X: 'static, 
+        X: 'static,
         A: 'static,
-        B: 'static, // B must be 'static for CFn<X,B> which is Self::Applied<B>
+        B: 'static, // B must be 'static for CFn<X,B> which is Self::Of<B>
     {
-        fn map(input: Self::Applied<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Applied<B>
+        fn map(input: Self::Of<A>, func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B>
         {
             // input is CFn<X, A>
             // func is A -> B
             // result is CFn<X, B>
             // To create a new CFn, the captured 'func' needs to be Clone if 'input' is called multiple times.
-            // Or, if 'input' is Fn, and 'func' is Fn, the result can be Fn.
-            // Let's assume func is Clone for simplicity to create a new CFn.
             CFn::new(move |x: X| func.clone()(input.call(x))) // func.clone() for new CFn
         }
     }
 
-    // Functor impl for CFnOnceHKTMarker (maps over the output type of CFnOnce)
-    impl<X, A, B> Functor<A, B> for CFnOnceHKTMarker<X>
+    // Functor impl for CFnOnceKind (maps over the output type of CFnOnce)
+    impl<X, A, B> Functor<A, B> for CFnOnceKind<X>
     where
-        X: 'static, 
+        X: 'static,
         A: 'static,
-        B: 'static, // B must be 'static for CFnOnce<X,B> which is Self::Applied<B>
+        B: 'static, // B must be 'static for CFnOnce<X,B> which is Self::Of<B>
     {
-        fn map(input: Self::Applied<A>, mut func: impl FnMut(A) -> B + Clone + 'static) -> Self::Applied<B> // Added mut for func
+        fn map(input: Self::Of<A>, mut func: impl FnMut(A) -> B + Clone + 'static) -> Self::Of<B> // Added mut for func
         {
             CFnOnce::new(move |x: X| func(input.call_once(x)))
         }
     }
 }
 
-// Directly export HKT Functor
-pub use hkt::{Functor};
-// Note: CFnHKTMarker and CFnOnceHKTMarker are defined in kind_based::kind
-// and Functor implementations for them are in the hkt module above.
-// This re-export makes `crate::functor::Functor` point to the HKT one.
+// Directly export Kind-based Functor
+pub use kind::{Functor}; // Renamed from hkt to kind
+// Note: CFnKind and CFnOnceKind are defined in kind_based::kind
+// and Functor implementations for them are in the kind module above.
+// This re-export makes `crate::functor::Functor` point to the Kind-based one.

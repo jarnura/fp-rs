@@ -1,60 +1,60 @@
-pub mod hkt {
-    //! # Higher-Kinded Type (HKT) Monad and Bind
+pub mod kind { // Renamed from hkt to kind
+    //! # Kind-based Monad and Bind for the `monadify` library
     //!
-    //! This module defines the `Monad` and `Bind` traits for HKTs.
+    //! This module defines the `Monad` and `Bind` traits for Kind-encoded types.
     //!
     //! - [`Bind`]: Provides the `bind` method (often called `flatMap` or `>>=`),
     //!   which allows sequencing operations that return a monadic value. It extends [`Apply`].
     //! - [`Monad`]: Extends [`Applicative`] (and thus `Bind` via `Applicative`'s supertrait `Apply`)
-    //!   and adds the `join` method, which flattens a nested monadic structure (e.g., `F<F<A>>` to `F<A>`).
+    //!   and adds the `join` method, which flattens a nested monadic structure (e.g., `F::Of<F::Of<A>>` to `F::Of<A>`).
     //!   Alternatively, a monad can be defined by `pure` (from `Applicative`) and `bind`.
     //!
     //! ## Example
     //!
     //! ```
-    //! use monadify::monad::hkt::{Monad, Bind};
-    //! use monadify::applicative::hkt::Applicative; // For pure
-    //! use monadify::kind_based::kind::OptionHKTMarker;
+    //! use monadify::monad::kind::{Monad, Bind};
+    //! use monadify::applicative::kind::Applicative; // For pure
+    //! use monadify::kind_based::kind::OptionKind;
     //!
     //! // Using bind
     //! let opt_val: Option<i32> = Some(5);
     //! let bind_fn = |x: i32| if x > 0 { Some(x * 2) } else { None };
-    //! let result_bind: Option<i32> = OptionHKTMarker::bind(opt_val, bind_fn);
+    //! let result_bind: Option<i32> = OptionKind::bind(opt_val, bind_fn);
     //! assert_eq!(result_bind, Some(10));
     //!
     //! let opt_val_none: Option<i32> = Some(-5);
-    //! let result_bind_none: Option<i32> = OptionHKTMarker::bind(opt_val_none, bind_fn);
+    //! let result_bind_none: Option<i32> = OptionKind::bind(opt_val_none, bind_fn);
     //! assert_eq!(result_bind_none, None);
     //!
     //! // Using join
     //! let nested_opt: Option<Option<String>> = Some(Some("hello".to_string()));
-    //! let joined_opt: Option<String> = OptionHKTMarker::join(nested_opt);
+    //! let joined_opt: Option<String> = OptionKind::join(nested_opt);
     //! assert_eq!(joined_opt, Some("hello".to_string()));
     //!
     //! let nested_none_inner: Option<Option<String>> = Some(None);
-    //! let joined_none_inner: Option<String> = OptionHKTMarker::join(nested_none_inner);
+    //! let joined_none_inner: Option<String> = OptionKind::join(nested_none_inner);
     //! assert_eq!(joined_none_inner, None);
     //!
     //! let nested_none_outer: Option<Option<String>> = None;
-    //! let joined_none_outer: Option<String> = OptionHKTMarker::join(nested_none_outer);
+    //! let joined_none_outer: Option<String> = OptionKind::join(nested_none_outer);
     //! assert_eq!(joined_none_outer, None);
     //! ```
 
-    use crate::applicative::hkt::Applicative; // HKT Applicative
-    use crate::apply::hkt::Apply;             // HKT Apply
+    use crate::applicative::kind::Applicative; // Kind-based Applicative
+    use crate::apply::kind::Apply;             // Kind-based Apply
     use crate::function::{CFn, CFnOnce};
     use crate::kind_based::kind::{
-        HKT, HKT1, OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker
+        Kind, Kind1, OptionKind, ResultKind, VecKind, CFnKind, CFnOnceKind
     };
 
-    /// HKT-based `Monad` trait.
+    /// Kind-based `Monad` trait.
     ///
     /// A `Monad` allows for sequencing computations within a context. It extends
     /// [`Applicative`]. The key additional operation is `join`, which flattens
     /// nested monadic structures.
     ///
-    /// `Self` refers to the HKT marker type (e.g., [`OptionHKTMarker`]) that implements
-    /// [`HKT1`] and [`Applicative`].
+    /// `Self` refers to the Kind marker type (e.g., [`OptionKind`]) that implements
+    /// [`Kind1`] and [`Applicative`].
     /// `A` is the type of the value held within the monadic context (e.g., the `T` in `Option<T>`).
     ///
     /// ## Monad Laws
@@ -67,46 +67,46 @@ pub mod hkt {
     /// which `Applicative` extends):
     /// 1.  `join(pure(m)) == m`
     /// 2.  `join(map(m, pure)) == m`
-    /// 3.  `join(map(mma, join)) == join(join(mma))` (if `map` is defined for `F<F<F<A>>>`)
+    /// 3.  `join(map(mma, join)) == join(join(mma))` (if `map` is defined for `F::Of<F::Of<F::Of<A>>>`)
     ///     or more commonly: `join(map(mmma, |mma| join(mma))) == join(join(mmma))`
     pub trait Monad<A>: Applicative<A> // Monad holds type A
     where
-        Self: Sized + HKT1, // Self is the HKT Marker
+        Self: Sized + Kind1, // Self is the Kind Marker
         A: 'static,
     {
         /// Flattens a nested monadic structure.
         ///
-        /// For an HKT `F`, `join` takes `F<F<A>>` and returns `F<A>`.
+        /// For a Kind `F`, `join` takes `F::Of<F::Of<A>>` and returns `F::Of<A>`.
         ///
         /// # Example
         /// ```
-        /// use monadify::monad::hkt::Monad;
-        /// use monadify::kind_based::kind::OptionHKTMarker;
+        /// use monadify::monad::kind::Monad;
+        /// use monadify::kind_based::kind::OptionKind;
         ///
         /// let nested: Option<Option<i32>> = Some(Some(10));
-        /// let flat: Option<i32> = OptionHKTMarker::join(nested);
+        /// let flat: Option<i32> = OptionKind::join(nested);
         /// assert_eq!(flat, Some(10));
         ///
         /// let nested_none: Option<Option<i32>> = Some(None);
-        /// assert_eq!(OptionHKTMarker::join(nested_none), None);
+        /// assert_eq!(OptionKind::join(nested_none), None);
         /// ```
-        fn join(mma: Self::Applied<Self::Applied<A>>) -> Self::Applied<A>;
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A>; // Changed Applied to Of
     }
 
-    /// HKT-based `Bind` trait (equivalent to `flatMap` or Haskell's `>>=`).
+    /// Kind-based `Bind` trait (equivalent to `flatMap` or Haskell's `>>=`).
     ///
     /// `Bind` allows sequencing operations where each operation takes a normal value
-    /// and returns a value wrapped in the HKT context. It extends [`Apply`].
+    /// and returns a value wrapped in the Kind context. It extends [`Apply`].
     ///
-    /// `Self` refers to the HKT marker type (e.g., [`OptionHKTMarker`]).
-    /// `A` is the type of the value within the input HKT context `Self::Applied<A>`.
-    /// `B` is the type of the value within the output HKT context `Self::Applied<B>`
+    /// `Self` refers to the Kind marker type (e.g., [`OptionKind`]).
+    /// `A` is the type of the value within the input Kind context `Self::Of<A>`.
+    /// `B` is the type of the value within the output Kind context `Self::Of<B>`
     /// that the provided function `func` returns.
     ///
     /// ## Example
     /// ```
-    /// use monadify::monad::hkt::Bind;
-    /// use monadify::kind_based::kind::OptionHKTMarker;
+    /// use monadify::monad::kind::Bind;
+    /// use monadify::kind_based::kind::OptionKind;
     ///
     /// let opt_val: Option<i32> = Some(5);
     ///
@@ -115,68 +115,67 @@ pub mod hkt {
     ///     if x % 2 == 0 { Some((x as f64) / 2.0) } else { None }
     /// };
     ///
-    /// let result: Option<f64> = OptionHKTMarker::bind(opt_val, half); // Fails as 5 is odd
+    /// let result: Option<f64> = OptionKind::bind(opt_val, half); // Fails as 5 is odd
     /// assert_eq!(result, None);
     ///
-    /// let result_even: Option<f64> = OptionHKTMarker::bind(Some(10), half); // Succeeds
+    /// let result_even: Option<f64> = OptionKind::bind(Some(10), half); // Succeeds
     /// assert_eq!(result_even, Some(5.0));
     /// ```
     pub trait Bind<A, B>: Apply<A, B>
     where
-        Self: Sized + HKT1,
-        A: 'static, 
-        B: 'static, 
-        // Self::Applied<B>: 'static, // This was for the default impl, may not be needed at trait level.
+        Self: Sized + Kind1, // Changed HKT1 to Kind1
+        A: 'static,
+        B: 'static,
+        // Self::Of<B>: 'static, // This was for the default impl, may not be needed at trait level.
                                    // Apply<A,B> already requires B: 'static.
     {
-        /// Sequentially composes computations within the HKT context.
+        /// Sequentially composes computations within the Kind context.
         ///
-        /// Takes a value in context (`Self::Applied<A>`) and a function (`A -> Self::Applied<B>`).
+        /// Takes a value in context (`Self::Of<A>`) and a function (`A -> Self::Of<B>`).
         /// It applies the function to the unwrapped value (if present/valid) and returns
-        /// the resulting context `Self::Applied<B>`.
-        fn bind(input: Self::Applied<A>, func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B>;
+        /// the resulting context `Self::Of<B>`.
+        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B>; // Changed Applied to Of
     }
 
     // --- Bind Implementations ---
 
-    impl<A: 'static, B: 'static> Bind<A, B> for OptionHKTMarker {
+    impl<A: 'static, B: 'static> Bind<A, B> for OptionKind { // Changed OptionHKTMarker to OptionKind
         /// For `Option`, `bind` is equivalent to `Option::and_then`.
         /// If `input` is `Some(a)`, it applies `func` to `a`.
         /// If `input` is `None`, it returns `None`.
-        fn bind(input: Self::Applied<A>, func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
+        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
             input.and_then(func)
         }
     }
 
-    impl<A: 'static, B: 'static, E: 'static + Clone> Bind<A, B> for ResultHKTMarker<E> {
+    impl<A: 'static, B: 'static, E: 'static + Clone> Bind<A, B> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
         /// For `Result`, `bind` is equivalent to `Result::and_then`.
         /// If `input` is `Ok(a)`, it applies `func` to `a`.
         /// If `input` is `Err(e)`, it propagates the `Err(e)`.
-        fn bind(input: Self::Applied<A>, func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
+        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
             input.and_then(func)
         }
     }
 
-    impl<A: 'static + Clone, B: 'static> Bind<A, B> for VecHKTMarker {
+    impl<A: 'static + Clone, B: 'static> Bind<A, B> for VecKind { // Changed VecHKTMarker to VecKind
         /// For `Vec`, `bind` applies `func` to each element and flattens the results.
         /// This is equivalent to `Vec::into_iter().flat_map(func).collect()`.
-        fn bind(input: Self::Applied<A>, func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
+        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
             input.into_iter().flat_map(func).collect()
         }
     }
 
-    // Bind for CFnHKTMarker<R> (Kleisli composition for R -> _)
-    // input: Self::Applied<A> which is CFn<R, A>
-    // func: A -> Self::Applied<B> which is A -> CFn<R, B> (a function producing a function)
-    // result: Self::Applied<B> which is CFn<R, B> (a new function R -> B)
-    impl<R, A, B: 'static> Bind<A, B> for CFnHKTMarker<R>
+    // Bind for CFnKind<R> (Kleisli composition for R -> _)
+    // input: Self::Of<A> which is CFn<R, A>
+    // func: A -> Self::Of<B> which is A -> CFn<R, B> (a function producing a function)
+    // result: Self::Of<B> which is CFn<R, B> (a new function R -> B)
+    impl<R, A, B: 'static> Bind<A, B> for CFnKind<R> // Changed CFnHKTMarker to CFnKind
     where
         R: 'static + Clone, // Clone for `r.clone()`
         A: 'static,
-        // Bind trait now only requires Apply<A,B> as a supertrait.
-        Self: Apply<A,B>, 
-        Self: HKT<Applied<A> = CFn<R, A>>,
-        Self: HKT<Applied<B> = CFn<R, B>>,
+        Self: Apply<A,B>,
+        Self: Kind<Of<A> = CFn<R, A>>, // Changed HKT to Kind, Applied to Of
+        Self: Kind<Of<B> = CFn<R, B>>, // Changed HKT to Kind, Applied to Of
     {
         /// Implements Kleisli composition for functions `R -> A` and `A -> (R -> B)`.
         ///
@@ -186,7 +185,7 @@ pub mod hkt {
         /// 1. Calls `input_fn(r)` to get `a: A`.
         /// 2. Calls `func(a)` to get `output_fn: R -> B`.
         /// 3. Calls `output_fn(r)` to get `b: B`.
-        fn bind(input: Self::Applied<A>, func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
+        fn bind(input: Self::Of<A>, func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
             let concrete_input_fn = input;
 
             CFn::new(move |r: R| {
@@ -198,20 +197,19 @@ pub mod hkt {
         }
     }
 
-    impl<R, A, B: 'static> Bind<A, B> for CFnOnceHKTMarker<R>
+    impl<R, A, B: 'static> Bind<A, B> for CFnOnceKind<R> // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         R: 'static + Clone,
         A: 'static,
-        // Bind trait now only requires Apply<A,B> as a supertrait.
-        Self: Apply<A,B>, 
-        Self: HKT<Applied<A> = CFnOnce<R, A>>,
-        Self: HKT<Applied<B> = CFnOnce<R, B>>,
+        Self: Apply<A,B>,
+        Self: Kind<Of<A> = CFnOnce<R, A>>, // Changed HKT to Kind, Applied to Of
+        Self: Kind<Of<B> = CFnOnce<R, B>>, // Changed HKT to Kind, Applied to Of
     {
         /// Implements Kleisli composition for functions `R -> A` (once) and `A -> (R -> B)` (once).
         ///
-        /// Similar to `CFnHKTMarker::bind`, but for `CFnOnce`.
+        /// Similar to `CFnKind::bind`, but for `CFnOnce`.
         /// The resulting function `R -> B` can also only be called once.
-        fn bind(input: Self::Applied<A>, mut func: impl FnMut(A) -> Self::Applied<B> + Clone + 'static) -> Self::Applied<B> {
+        fn bind(input: Self::Of<A>, mut func: impl FnMut(A) -> Self::Of<B> + Clone + 'static) -> Self::Of<B> { // Changed Applied to Of
             let concrete_input = input; // CFnOnce<R,A>
             CFnOnce::new(move |r: R| {
                 let a_val = concrete_input.call_once(r.clone());
@@ -223,38 +221,38 @@ pub mod hkt {
 
     // --- Monad Implementations ---
 
-    impl<A: 'static> Monad<A> for OptionHKTMarker {
+    impl<A: 'static> Monad<A> for OptionKind { // Changed OptionHKTMarker to OptionKind
         /// Flattens `Option<Option<A>>` to `Option<A>`.
         /// `Some(Some(a))` becomes `Some(a)`.
         /// `Some(None)` becomes `None`.
         /// `None` becomes `None`.
-        fn join(mma: Self::Applied<Self::Applied<A>>) -> Self::Applied<A> { // mma is Option<Option<A>>
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is Option<Option<A>>. Changed Applied to Of
             mma.and_then(core::convert::identity)
         }
     }
 
-    impl<A: 'static, E: 'static + Clone> Monad<A> for ResultHKTMarker<E> {
+    impl<A: 'static, E: 'static + Clone> Monad<A> for ResultKind<E> { // Changed ResultHKTMarker to ResultKind
         /// Flattens `Result<Result<A, E>, E>` to `Result<A, E>`.
         /// `Ok(Ok(a))` becomes `Ok(a)`.
         /// `Ok(Err(e))` becomes `Err(e)`.
         /// `Err(e)` becomes `Err(e)`.
-        fn join(mma: Self::Applied<Self::Applied<A>>) -> Self::Applied<A> { // mma is Result<Result<A,E>, E>
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is Result<Result<A,E>, E>. Changed Applied to Of
             mma.and_then(core::convert::identity)
         }
     }
 
-    impl<A: 'static + Clone> Monad<A> for VecHKTMarker {
+    impl<A: 'static + Clone> Monad<A> for VecKind { // Changed VecHKTMarker to VecKind
         /// Flattens `Vec<Vec<A>>` to `Vec<A>`.
         /// `vec![vec![1, 2], vec![3]]` becomes `vec![1, 2, 3]`.
-        fn join(mma: Self::Applied<Self::Applied<A>>) -> Self::Applied<A> { // mma is Vec<Vec<A>>
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is Vec<Vec<A>>. Changed Applied to Of
             mma.into_iter().flatten().collect()
         }
     }
 
-    impl<R, A> Monad<A> for CFnHKTMarker<R>
+    impl<R, A> Monad<A> for CFnKind<R> // Changed CFnHKTMarker to CFnKind
     where
         R: 'static + Clone,
-        A: 'static + Clone, // From Applicative supertrait for CFnHKTMarker<R>
+        A: 'static + Clone, // From Applicative supertrait for CFnKind<R>
     {
         /// Flattens `CFn<R, CFn<R, A>>` to `CFn<R, A>`.
         ///
@@ -263,22 +261,22 @@ pub mod hkt {
         /// The new function, when called with `r: R`:
         /// 1. Calls `mma(r)` to get `ma: R -> A`.
         /// 2. Calls `ma(r)` to get `a: A`.
-        fn join(mma: Self::Applied<Self::Applied<A>>) -> Self::Applied<A> { // mma is CFn<R, CFn<R,A>>
-            // Bind<Self::Applied<A>, A> means Bind<CFn<R,A>, A>
-            <Self as Bind<Self::Applied<A>, A>>::bind(mma, |ma: Self::Applied<A>| ma)
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is CFn<R, CFn<R,A>>. Changed Applied to Of
+            // Bind<Self::Of<A>, A> means Bind<CFn<R,A>, A>
+            <Self as Bind<Self::Of<A>, A>>::bind(mma, |ma: Self::Of<A>| ma) // Changed Applied to Of
         }
     }
 
-    impl<R, A> Monad<A> for CFnOnceHKTMarker<R>
+    impl<R, A> Monad<A> for CFnOnceKind<R> // Changed CFnOnceHKTMarker to CFnOnceKind
     where
         R: 'static + Clone,
-        A: 'static + Clone, // From Applicative supertrait for CFnOnceHKTMarker<R>
+        A: 'static + Clone, // From Applicative supertrait for CFnOnceKind<R>
     {
         /// Flattens `CFnOnce<R, CFnOnce<R, A>>` to `CFnOnce<R, A>`.
         ///
-        /// Similar to `CFnHKTMarker::join`, but for `CFnOnce`.
-        fn join(mma: Self::Applied<Self::Applied<A>>) -> Self::Applied<A> { // mma is CFnOnce<R, CFnOnce<R,A>>
-            <Self as Bind<Self::Applied<A>, A>>::bind(mma, |ma: Self::Applied<A>| ma)
+        /// Similar to `CFnKind::join`, but for `CFnOnce`.
+        fn join(mma: Self::Of<Self::Of<A>>) -> Self::Of<A> { // mma is CFnOnce<R, CFnOnce<R,A>>. Changed Applied to Of
+            <Self as Bind<Self::Of<A>, A>>::bind(mma, |ma: Self::Of<A>| ma) // Changed Applied to Of
         }
     }
 
@@ -288,30 +286,30 @@ pub mod hkt {
     ///
     /// # Example
     /// ```
-    /// use monadify::monad::hkt::bind; // The helper function
-    /// use monadify::kind_based::kind::OptionHKTMarker;
+    /// use monadify::monad::kind::bind; // The helper function
+    /// use monadify::kind_based::kind::OptionKind;
     ///
     /// let opt_val: Option<i32> = Some(5);
     /// let half = |x: i32| if x % 2 == 0 { Some((x as f64) / 2.0) } else { None };
     ///
-    /// // Note: Type of F (OptionHKTMarker) might need to be inferred or specified
-    /// let result: Option<f64> = bind::<OptionHKTMarker, _, _, _>(half, opt_val);
+    /// // Note: Type of F (OptionKind) might need to be inferred or specified
+    /// let result: Option<f64> = bind::<OptionKind, _, _, _>(half, opt_val);
     /// assert_eq!(result, None);
     /// ```
     pub fn bind<F, A, B, FuncImpl>(
         func: FuncImpl,
-        ma: F::Applied<A>,
-    ) -> F::Applied<B>
+        ma: F::Of<A>, // Changed Applied to Of
+    ) -> F::Of<B>     // Changed Applied to Of
     where
-        F: Bind<A, B> + HKT1, // F is the HKTMarker
-        FuncImpl: FnMut(A) -> F::Applied<B> + Clone + 'static, // Added Clone + 'static
+        F: Bind<A, B> + Kind1, // F is the KindMarker. Changed HKT1 to Kind1
+        FuncImpl: FnMut(A) -> F::Of<B> + Clone + 'static, // Changed Applied to Of
         A: 'static,
-        B: 'static, // B needs to be 'static for F::Applied<B>
+        B: 'static, // B needs to be 'static for F::Of<B>
     {
         F::bind(ma, func)
     }
 }
 
-// Directly export HKT Bind, Monad, and helper bind
-pub use hkt::{Bind, Monad, bind};
-// Note: join is a method on the Monad trait in the hkt module.
+// Directly export Kind-based Bind, Monad, and helper bind
+pub use kind::{Bind, Monad, bind}; // Renamed from hkt to kind
+// Note: join is a method on the Monad trait in the kind module.

@@ -32,25 +32,25 @@ The library also includes `CFn` and `CFnOnce` wrappers for heap-allocated closur
 
 ## Usage Example
 
-Here's a quick example of using the `Functor` trait with `Option` (HKT is now the default):
+Here's a quick example of using the `Functor` trait with `Option` (Kind-based is now the default):
 
 ```rust
-use monadify::{Functor, OptionHKTMarker}; // Import HKT Functor and marker
+use monadify::{Functor, OptionKind}; // Import Kind-based Functor and marker
 
 let some_value: Option<i32> = Some(10);
-// For HKT, Functor<A,B> is on the marker OptionHKTMarker
-let mapped_value = OptionHKTMarker::map(some_value, |x| x * 2);
+// For Kind-based, Functor<A,B> is on the marker OptionKind
+let mapped_value = OptionKind::map(some_value, |x| x * 2);
 assert_eq!(mapped_value, Some(20));
 
 let no_value: Option<i32> = None;
-let mapped_none = OptionHKTMarker::map(no_value, |x: i32| x * 2);
+let mapped_none = OptionKind::map(no_value, |x: i32| x * 2);
 assert_eq!(mapped_none, None);
 ```
 
 And an example using `Bind` (often called `flat_map`):
 
 ```rust
-use monadify::{Bind, OptionHKTMarker}; // Import HKT Bind and marker
+use monadify::{Bind, OptionKind}; // Import Kind-based Bind and marker
 
 fn try_parse_and_double(s: &str) -> Option<i32> {
     s.parse::<i32>().ok().map(|n| n * 2)
@@ -58,16 +58,16 @@ fn try_parse_and_double(s: &str) -> Option<i32> {
 
 let opt_str: Option<String> = Some("5".to_string());
 
-// For HKT, Bind<A,B> is on the marker OptionHKTMarker
-    // The closure takes String because OptionHKTMarker::Applied<String> is Option<String>
-    let result = OptionHKTMarker::bind(
+// For Kind-based, Bind<A,B> is on the marker OptionKind
+    // The closure takes String because OptionKind::Of<String> is Option<String>
+    let result = OptionKind::bind(
         opt_str,
-        |st: String| try_parse_and_double(&st) // Our function A -> F<B>
+        |st: String| try_parse_and_double(&st) // Our function A -> F::Of<B>
     );
     assert_eq!(result, Some(10));
 
     let opt_invalid_str: Option<String> = Some("hello".to_string());
-    let result_invalid = OptionHKTMarker::bind(
+    let result_invalid = OptionKind::bind(
         opt_invalid_str,
         |st: String| try_parse_and_double(&st)
     );
@@ -86,11 +86,11 @@ cargo build
 ## Running Tests
 
 The library includes a comprehensive test suite to verify the laws of `Functor`, `Applicative`, `Monad`, etc.
-To run the default HKT tests:
+To run the default Kind-based tests:
 ```bash
 cargo test
 ```
-This suite includes over 140 tests covering HKT implementations (for `Option`, `Result`, `Vec`, `Identity`, `CFn`, `ReaderT`) and `Profunctor` laws, all passing.
+This suite includes over 120 tests covering Kind-based implementations (for `Option`, `Result`, `Vec`, `Identity`, `CFn`, `CFnOnce`, `ReaderT`) and `Profunctor` laws.
 
 To run tests for the legacy (non-HKT) implementations, use the `legacy` feature flag:
 ```bash
