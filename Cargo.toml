@@ -10,8 +10,8 @@ readme = "README.md"
 repository = "https://github.com/jarnura/fp-rs"
 homepage = "https://github.com/jarnura/fp-rs"
 documentation = "https://docs.rs/fp-rs" # Will be live after publishing to crates.io
-keywords = ["functional", "fp", "monad", "functor", "applicative", "profunctor", "rust-patterns"]
-categories = ["rust-patterns", "algorithms"] # Removed "no-std" as std is currently used
+keywords = ["functional", "fp", "monad"]
+categories = ["rust-patterns"] # Removed "no-std" as std is currently used
 
 [dependencies]
 
