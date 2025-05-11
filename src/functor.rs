@@ -77,8 +77,6 @@ pub mod hkt {
         }
     }
 
-    // CFnHKTMarker and CFnOnceHKTMarker definitions and HKT impls are moved to src/kind_based/kind.rs
-
     // Functor impl for CFnHKTMarker (maps over the output type of CFn)
     // A is the original output type, B is the new output type
     impl<X, A, B> Functor<A, B> for CFnHKTMarker<X>

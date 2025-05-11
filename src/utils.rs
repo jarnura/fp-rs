@@ -5,8 +5,8 @@
 ///
 /// # Examples
 /// ```
-/// use fp_rs::fn0; // Macro import
-/// use fp_rs::function::CFn; // For type annotation if needed
+/// use monadify::fn0; // Macro import
+/// use monadify::function::CFn; // For type annotation if needed
 ///
 /// let get_number = fn0!(|| 42);
 /// let result: i32 = get_number.call(()); // Call with a dummy unit argument
@@ -28,8 +28,8 @@ macro_rules! fn0 {
 ///
 /// # Examples
 /// ```
-/// use fp_rs::fn1;
-/// use fp_rs::function::CFn;
+/// use monadify::fn1;
+/// use monadify::function::CFn;
 ///
 /// let add_one = fn1!(|x: i32| x + 1);
 /// assert_eq!(add_one.call(5), 6);
@@ -52,8 +52,8 @@ macro_rules! fn1 {
 ///
 /// # Examples
 /// ```
-/// use fp_rs::fn2;
-/// use fp_rs::function::CFn;
+/// use monadify::fn2;
+/// use monadify::function::CFn;
 ///
 /// let curried_add = fn2!(|x: i32| move |y: i32| x + y);
 ///
@@ -76,8 +76,8 @@ macro_rules! fn2 {
 ///
 /// # Examples
 /// ```
-/// use fp_rs::fn3;
-/// use fp_rs::function::CFn;
+/// use monadify::fn3;
+/// use monadify::function::CFn;
 ///
 /// let curried_add3 = fn3!(|x: i32| move |y: i32| move |z: i32| x + y + z);
 ///

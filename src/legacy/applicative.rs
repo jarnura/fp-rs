@@ -1,8 +1,27 @@
 // Content from the original classic module in src/applicative.rs
 use crate::legacy::apply::Apply; // Point to legacy Apply
 
+/// Legacy version of the `Applicative` trait.
+///
+/// An `Applicative` functor is a type that can lift a value into a context (`pure`)
+/// and apply a wrapped function to a wrapped value (via `apply` from the `Apply` supertrait).
+/// This version uses associated types rather than HKTs.
 pub trait Applicative<A>: Apply<A> {
+    /// The type constructor for this `Applicative`.
+    /// For example, if `Self` is `Option<A>`, then `Applicative<T>` would be `Option<T>`.
     type Applicative<T>;
+    /// Lifts a value `v` of type `A` into the applicative context.
+    ///
+    /// # Example
+    /// ```
+    /// use monadify::legacy::applicative::Applicative; // Assuming legacy feature is enabled
+    ///
+    /// let val_opt: Option<i32> = <Option<i32> as Applicative<i32>>::pure(10);
+    /// assert_eq!(val_opt, Some(10));
+    ///
+    /// let val_vec: Vec<String> = <Vec<String> as Applicative<String>>::pure("hello".to_string());
+    /// assert_eq!(val_vec, vec!["hello".to_string()]);
+    /// ```
     fn pure(v: A) -> Self::Applicative<A>;
 }
 
@@ -26,35 +45,3 @@ impl<A: 'static + Clone> Applicative<A> for Vec<A> {
         vec![v]
     }
 }
-
-// #[allow(clippy::module_name_repetitions)]
-// pub fn lift_a1<AppCtx, A, B: 'static, FnHook>(
-//     f: FnHook,
-//     fa: AppCtx,
-// ) -> <AppCtx as Apply<A>>::Apply<B>
-// where
-//     A: 'static, // Added: Apply<A> impls often require A: 'static
-//     FnHook: Fn(A) -> B + 'static,
-//     AppCtx: Apply<A>, // AppCtx is, e.g., Option<A>, Vec<A>
-
-//     // This complex type is "AppCtx's structure but holding a function CFn<A,B>"
-//     // e.g., if AppCtx is Option<A>, this type is Option<CFn<A,B>>.
-//     // This type must implement Applicative for CFn<A,B>.
-//     <AppCtx as crate::legacy::functor::Functor<A>>::Functor<<AppCtx as Apply<A>>::Fnn<A, B>>:
-//         Applicative<CFn<A, B>> + 'static,
-// {
-//     let f_cfn = CFn::new(f);
-
-//     // Call pure on the type "AppCtx's structure holding CFn<A,B>".
-//     // For example, if AppCtx is Option<A>, this is effectively:
-//     // let f_in_context: Option<CFn<A,B>> = <Option<CFn<A,B>> as Applicative<CFn<A,B>>>::pure(f_cfn);
-//     let f_in_context: <AppCtx as crate::legacy::functor::Functor<A>>::Functor<<AppCtx as Apply<A>>::Fnn<A, B>> =
-//         <<AppCtx as crate::legacy::functor::Functor<A>>::Functor<<AppCtx as Apply<A>>::Fnn<A, B>>
-//             as Applicative<CFn<A, B>>>::pure(f_cfn);
-
-//     // Pass this f_in_context to AppCtx's apply method.
-//     // AppCtx::apply expects its second argument to be of type:
-//     // <AppCtx as Functor<A>>::Functor<<AppCtx as Apply<A>>::Fnn<A,B>>
-//     // which is exactly the type of f_in_context.
-//     <AppCtx as Apply<A>>::apply(fa, f_in_context)
-// }

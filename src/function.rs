@@ -23,7 +23,7 @@ type BFnOnce<A, B> = Box<dyn FnOnce(A) -> B + 'static>;
 ///
 /// # Examples
 /// ```
-/// use fp_rs::function::CFn;
+/// use monadify::function::CFn;
 ///
 /// let add_one = CFn::new(|x: i32| x + 1);
 /// assert_eq!(add_one.call(5), 6);
@@ -38,7 +38,7 @@ pub struct CFn<A, B>(pub BFn<A, B>);
 ///
 /// # Examples
 /// ```
-/// use fp_rs::function::CFnOnce;
+/// use monadify::function::CFnOnce;
 ///
 /// let s = "hello".to_string();
 /// // This closure captures `s` by move, so it's FnOnce.

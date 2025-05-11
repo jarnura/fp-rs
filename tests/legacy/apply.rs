@@ -19,20 +19,20 @@ mod classic_apply_tests {
 
     #[test]
     fn apply_on_option() {
-        let closure = fp_rs::fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
+        let closure = monadify::fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
         // Option::map uses Functor trait
-        let some_closure = <Option<i32> as fp_rs::legacy::functor::Functor<i32>>::map(Some(1), closure.clone());
-        let none_closure = <Option<i32> as fp_rs::legacy::functor::Functor<i32>>::map(None, closure);
+        let some_closure = <Option<i32> as monadify::legacy::functor::Functor<i32>>::map(Some(1), closure.clone());
+        let none_closure = <Option<i32> as monadify::legacy::functor::Functor<i32>>::map(None, closure);
         
         // Option::apply uses Apply trait
-        assert_eq!(<Option<i8> as fp_rs::legacy::apply::Apply<i8>>::apply(Some(2), some_closure), Some("12".to_string()));
-        assert_eq!(<Option<i8> as fp_rs::legacy::apply::Apply<i8>>::apply(Some(2), none_closure), None);
+        assert_eq!(<Option<i8> as monadify::legacy::apply::Apply<i8>>::apply(Some(2), some_closure), Some("12".to_string()));
+        assert_eq!(<Option<i8> as monadify::legacy::apply::Apply<i8>>::apply(Some(2), none_closure), None);
 
-        let closure_lift = fp_rs::fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
-        assert_eq!(fp_rs::legacy::apply::lift2(closure_lift.clone(), Some(1), Some(2)), Some("12".to_string()));
-        assert_eq!(fp_rs::legacy::apply::lift2(closure_lift, None, Some(2)), None);
+        let closure_lift = monadify::fn2!(|x: i32| move |y: i8| format!("{x}{y}"));
+        assert_eq!(monadify::legacy::apply::lift2(closure_lift.clone(), Some(1), Some(2)), Some("12".to_string()));
+        assert_eq!(monadify::legacy::apply::lift2(closure_lift, None, Some(2)), None);
 
-        let closure_lift3 = fp_rs::fn3!(|x: i32| move |y: i8| move |z: i32| x + y as i32 + z);
-        assert_eq!(fp_rs::legacy::apply::lift3(closure_lift3, Some(1), Some(2), Some(3)), Some(6));
+        let closure_lift3 = monadify::fn3!(|x: i32| move |y: i8| move |z: i32| x + y as i32 + z);
+        assert_eq!(monadify::legacy::apply::lift3(closure_lift3, Some(1), Some(2), Some(3)), Some(6));
     }
 }

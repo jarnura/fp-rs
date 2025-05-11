@@ -1,12 +1,12 @@
 #![cfg(all(test, feature = "legacy"))] // Ensure these run only when 'legacy' is active
 
 // These imports will need to point to legacy versions.
-use fp_rs::legacy::identity::Identity; 
-use fp_rs::legacy::functor::Functor;
-use fp_rs::legacy::apply::Apply;
-use fp_rs::legacy::applicative::Applicative;
-use fp_rs::legacy::monad::Bind; // Assuming legacy Monad is also re-exported or directly used
-use fp_rs::function::CFn; // CFn is not part of legacy/hkt split, path should be fine
+use monadify::legacy::identity::Identity; 
+use monadify::legacy::functor::Functor;
+use monadify::legacy::apply::Apply;
+use monadify::legacy::applicative::Applicative;
+use monadify::legacy::monad::Bind; // Assuming legacy Monad is also re-exported or directly used
+use monadify::function::CFn; // CFn is not part of legacy/hkt split, path should be fine
 
 #[test]
 fn test_identity_functor_map() {

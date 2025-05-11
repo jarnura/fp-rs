@@ -1,11 +1,11 @@
 // Imports needed for the tests, adjusted from src/applicative.rs context
-use fp_rs::applicative::hkt::*; // For Applicative trait and lift_a1
-use fp_rs::apply::hkt::Apply;
-use fp_rs::functor::hkt::Functor;
-use fp_rs::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker};
-use fp_rs::identity::{Identity as IdType, IdentityHKTMarker};
-use fp_rs::transformers::reader::{ReaderT, ReaderTHKTMarker};
-use fp_rs::function::{CFn, CFnOnce};
+use monadify::applicative::hkt::*; // For Applicative trait and lift_a1
+use monadify::apply::hkt::Apply;
+use monadify::functor::hkt::Functor;
+use monadify::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker};
+use monadify::identity::{Identity as IdType, IdentityHKTMarker};
+use monadify::transformers::reader::{ReaderT, ReaderTHKTMarker};
+use monadify::function::{CFn, CFnOnce};
 use core::convert::identity;
 
 // The hkt_laws_tests module itself

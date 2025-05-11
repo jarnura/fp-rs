@@ -1,9 +1,9 @@
 
-use fp_rs::functor::hkt::Functor;
-use fp_rs::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker};
-use fp_rs::identity::{Identity, IdentityHKTMarker}; // Corrected import for IdentityHKTMarker
-use fp_rs::function::{CFn, CFnOnce};
-use fp_rs::transformers::reader::{ReaderT, ReaderTHKTMarker};
+use monadify::functor::hkt::Functor;
+use monadify::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker};
+use monadify::identity::{Identity, IdentityHKTMarker}; // Corrected import for IdentityHKTMarker
+use monadify::function::{CFn, CFnOnce};
+use monadify::transformers::reader::{ReaderT, ReaderTHKTMarker};
 // HKT1 import removed as it was unused.
 
 

@@ -13,10 +13,10 @@ pub mod hkt {
     //! ## Example
     //!
     //! ```
-    //! use fp_rs::applicative::hkt::{Applicative, lift_a1}; // Applicative for ::pure
-    //! use fp_rs::apply::hkt::Apply; // for .apply() method
-    //! use fp_rs::kind_based::kind::OptionHKTMarker;
-    //! use fp_rs::function::CFn;
+    //! use monadify::applicative::hkt::{Applicative, lift_a1}; // Applicative for ::pure
+    //! use monadify::apply::hkt::Apply; // for .apply() method
+    //! use monadify::kind_based::kind::OptionHKTMarker;
+    //! use monadify::function::CFn;
     //!
     //! // Using pure and apply directly
     //! let val_opt: Option<i32> = OptionHKTMarker::pure(10); // Some(10)
@@ -59,8 +59,8 @@ pub mod hkt {
     /// ## Example of `pure`
     ///
     /// ```
-    /// use fp_rs::applicative::hkt::Applicative;
-    /// use fp_rs::kind_based::kind::{OptionHKTMarker, VecHKTMarker};
+    /// use monadify::applicative::hkt::Applicative;
+    /// use monadify::kind_based::kind::{OptionHKTMarker, VecHKTMarker};
     ///
     /// // For Option
     /// let val_opt: Option<i32> = OptionHKTMarker::pure(10);
@@ -178,8 +178,8 @@ pub mod hkt {
     /// ## Example
     ///
     /// ```
-    /// use fp_rs::applicative::hkt::lift_a1;
-    /// use fp_rs::kind_based::kind::{OptionHKTMarker, VecHKTMarker}; // For context type
+    /// use monadify::applicative::hkt::lift_a1;
+    /// use monadify::kind_based::kind::{OptionHKTMarker, VecHKTMarker}; // For context type
     ///
     /// // Using lift_a1 with Option
     /// let opt_val: Option<i32> = Some(5);

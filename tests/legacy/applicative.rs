@@ -2,26 +2,26 @@
 // with use statements adjusted for the new location.
 
  // For map law test if Functor::map is used directly
-// lift_a1 is defined in src/applicative.rs (and thus in the fp_rs::applicative module)
+// lift_a1 is defined in src/applicative.rs (and thus in the monadify::applicative module)
 // `Applicative` and `lift_a1` are brought in via `super::*` in nested test modules.
 
-// Re-checking lift_a1 location: it's defined in src/applicative.rs, so it will be fp_rs::applicative::lift_a1
+// Re-checking lift_a1 location: it's defined in src/applicative.rs, so it will be monadify::applicative::lift_a1
 // However, the test `test_lift_a1` uses `lift_a1` directly after `use super::*;`.
-// So, in the new test file, it should be `use fp_rs::applicative::lift_a1;` at the top,
-// or `use fp_rs::applicative::*;` if many items are needed.
+// So, in the new test file, it should be `use monadify::applicative::lift_a1;` at the top,
+// or `use monadify::applicative::*;` if many items are needed.
 // Let's be specific.
 
 // Corrected imports for the test file structure:
-// Items from fp_rs (re-exported from lib.rs)
-// Items from fp_rs::module_name (specific modules)
+// Items from monadify (re-exported from lib.rs)
+// Items from monadify::module_name (specific modules)
 
 // These imports will need to point to legacy versions.
 // For now, using placeholder paths that will be fixed in Phase 5.
-// use fp_rs::legacy_applicative::lift_a1; 
-// use fp_rs::legacy_applicative::Applicative;
-// use fp_rs::legacy_apply::Apply;
-// use fp_rs::legacy_functor::Functor;
-// use fp_rs::legacy_function::CFn;
+// use monadify::legacy_applicative::lift_a1; 
+// use monadify::legacy_applicative::Applicative;
+// use monadify::legacy_apply::Apply;
+// use monadify::legacy_functor::Functor;
+// use monadify::legacy_function::CFn;
 
 
 // The actual use statements will depend on how `src/legacy/mod.rs` re-exports items,
@@ -42,26 +42,18 @@ mod classic_applicative_tests {
 
     #[test]
     fn check_some() {
-        // This will use the Applicative impl from fp_rs::legacy::applicative
-        assert_eq!(<Option<i32> as fp_rs::legacy::applicative::Applicative<i32>>::pure(1), Some(1));
+        // This will use the Applicative impl from monadify::legacy::applicative
+        assert_eq!(<Option<i32> as monadify::legacy::applicative::Applicative<i32>>::pure(1), Some(1));
     }
-
-    // #[test]
-    // fn test_lift_a1() {
-    //     let c = |x: i32| format!("{x}");
-    //     // lift_a1 is now re-exported from fp_rs::legacy
-    //     let result = fp_rs::legacy::lift_a1(c, Some(1));
-    //     assert_eq!(result, Some("1".to_string()))
-    // }
 }
 
 #[cfg(test)]
 mod applicative_laws {
-    use fp_rs::function::CFn; // Corrected path
-    use fp_rs::legacy::applicative::Applicative;
-    use fp_rs::legacy::apply::Apply;
+    use monadify::function::CFn; // Corrected path
+    use monadify::legacy::applicative::Applicative;
+    use monadify::legacy::apply::Apply;
     #[allow(unused_imports)] 
-    use fp_rs::legacy::functor::Functor; 
+    use monadify::legacy::functor::Functor; 
 
     fn identity<T>(x: T) -> T {
         x
@@ -150,10 +142,10 @@ mod applicative_laws {
 
 #[cfg(test)]
 mod result_applicative_laws {
-    use fp_rs::legacy::applicative::Applicative;
-    use fp_rs::legacy::apply::Apply;
-    use fp_rs::legacy::functor::Functor;
-    use fp_rs::function::CFn; // Corrected path
+    use monadify::legacy::applicative::Applicative;
+    use monadify::legacy::apply::Apply;
+    use monadify::legacy::functor::Functor;
+    use monadify::function::CFn; // Corrected path
 
     fn identity<T>(x: T) -> T {
         x
@@ -259,10 +251,10 @@ mod result_applicative_laws {
 
 #[cfg(test)]
 mod vec_applicative_laws {
-    use fp_rs::function::CFn; // Corrected path
-    use fp_rs::legacy::applicative::Applicative;
-    use fp_rs::legacy::apply::Apply;
-    use fp_rs::legacy::functor::Functor;
+    use monadify::function::CFn; // Corrected path
+    use monadify::legacy::applicative::Applicative;
+    use monadify::legacy::apply::Apply;
+    use monadify::legacy::functor::Functor;
 
 
     fn identity<T: Clone>(x: T) -> T {

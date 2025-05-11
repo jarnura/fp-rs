@@ -1,8 +1,8 @@
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion};
-use fp_rs::functor::Functor;
+use monadify::functor::Functor;
 #[cfg(feature = "legacy")]
-use fp_rs::legacy::functor::Functor as LegacyFunctor;
-use fp_rs::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker}; // Import HKT markers
+use monadify::legacy::functor::Functor as LegacyFunctor;
+use monadify::kind_based::kind::{OptionHKTMarker, ResultHKTMarker, VecHKTMarker}; // Import HKT markers
 
 // Benchmark for Option<T>
 pub fn map_option(c: &mut Criterion) {
@@ -70,13 +70,13 @@ pub fn map_vec(c: &mut Criterion) {
     group.finish();
 }
 
-use fp_rs::apply::Apply;
+use monadify::apply::Apply;
 #[cfg(feature = "legacy")]
-use fp_rs::legacy::apply::Apply as LegacyApply;
-use fp_rs::monad::Bind; // Monad import removed
+use monadify::legacy::apply::Apply as LegacyApply;
+use monadify::monad::Bind; // Monad import removed
 #[cfg(feature = "legacy")]
-use fp_rs::legacy::monad::Bind as LegacyBind;
-use fp_rs::function::CFn; // Import CFn
+use monadify::legacy::monad::Bind as LegacyBind;
+use monadify::function::CFn; // Import CFn
 
 // Benchmark for Apply on Option<T>
 pub fn apply_option(c: &mut Criterion) {

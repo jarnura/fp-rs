@@ -1,14 +1,14 @@
 // Original content from src/functor.rs mod tests, functor_laws, and result_functor_laws
-// with `use super::Functor` changed to `use fp_rs::Functor`
+// with `use super::Functor` changed to `use monadify::Functor`
 
 // Note: The `crate::function::CFn` import was commented out in the original functor_laws,
 // so it's not included here unless it was actually used.
 // If other `crate::` or `super::` imports were present and used, they'd be adjusted similarly.
-// For example, `use crate::function::CFn;` would become `use fp_rs::function::CFn;`
+// For example, `use crate::function::CFn;` would become `use monadify::function::CFn;`
 
 // These imports will need to point to legacy versions.
 // For now, using placeholder paths that will be fixed in Phase 5.
-// use fp_rs::legacy_functor::Functor;
+// use monadify::legacy_functor::Functor;
 
 
 #[cfg(test)]
@@ -16,9 +16,9 @@ mod classic_functor_tests {
 
     #[cfg(test)]
     mod tests {
-    // This will use the Functor impl from fp_rs::legacy::functor
+    // This will use the Functor impl from monadify::legacy::functor
     #[allow(unused_imports)] 
-    use fp_rs::legacy::functor::Functor; 
+    use monadify::legacy::functor::Functor; 
 
     #[test]
     fn add_one() {
@@ -30,8 +30,8 @@ mod classic_functor_tests {
 #[cfg(test)]
 mod functor_laws {
     #[allow(unused_imports)] 
-    use fp_rs::legacy::functor::Functor; 
-    // use fp_rs::legacy::function::CFn; // Example if CFn was from fp_rs::function and used
+    use monadify::legacy::functor::Functor; 
+    // use monadify::legacy::function::CFn; // Example if CFn was from monadify::function and used
 
     #[test]
     fn option_functor_identity_some() {
@@ -92,7 +92,7 @@ mod functor_laws {
 #[cfg(test)]
 mod result_functor_laws {
     #[allow(unused_imports)] 
-    use fp_rs::legacy::functor::Functor; 
+    use monadify::legacy::functor::Functor; 
 
     #[test]
     fn result_functor_identity_ok() {
@@ -163,7 +163,7 @@ mod result_functor_laws {
 
 #[cfg(test)]
 mod vec_functor_laws {
-    use fp_rs::legacy::functor::Functor; 
+    use monadify::legacy::functor::Functor; 
 
     #[test]
     fn vec_functor_identity_non_empty() {

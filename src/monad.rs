@@ -12,9 +12,9 @@ pub mod hkt {
     //! ## Example
     //!
     //! ```
-    //! use fp_rs::monad::hkt::{Monad, Bind};
-    //! use fp_rs::applicative::hkt::Applicative; // For pure
-    //! use fp_rs::kind_based::kind::OptionHKTMarker;
+    //! use monadify::monad::hkt::{Monad, Bind};
+    //! use monadify::applicative::hkt::Applicative; // For pure
+    //! use monadify::kind_based::kind::OptionHKTMarker;
     //!
     //! // Using bind
     //! let opt_val: Option<i32> = Some(5);
@@ -80,8 +80,8 @@ pub mod hkt {
         ///
         /// # Example
         /// ```
-        /// use fp_rs::monad::hkt::Monad;
-        /// use fp_rs::kind_based::kind::OptionHKTMarker;
+        /// use monadify::monad::hkt::Monad;
+        /// use monadify::kind_based::kind::OptionHKTMarker;
         ///
         /// let nested: Option<Option<i32>> = Some(Some(10));
         /// let flat: Option<i32> = OptionHKTMarker::join(nested);
@@ -105,8 +105,8 @@ pub mod hkt {
     ///
     /// ## Example
     /// ```
-    /// use fp_rs::monad::hkt::Bind;
-    /// use fp_rs::kind_based::kind::OptionHKTMarker;
+    /// use monadify::monad::hkt::Bind;
+    /// use monadify::kind_based::kind::OptionHKTMarker;
     ///
     /// let opt_val: Option<i32> = Some(5);
     ///
@@ -173,11 +173,8 @@ pub mod hkt {
     where
         R: 'static + Clone, // Clone for `r.clone()`
         A: 'static,
-        // Self: Monad<B> + Functor<A, Self::Applied<B>>, // Removed these from impl where clause
-        // Self::Applied<B>: 'static,                   // as Bind trait no longer requires them as supertraits directly.
-                                                      // Bind now only requires Apply<A,B>.
-        // Original specific requirements for CFnHKTMarker's direct bind:
-        Self: Apply<A,B>, // Ensure Apply is implemented (This is now the supertrait of Bind)
+        // Bind trait now only requires Apply<A,B> as a supertrait.
+        Self: Apply<A,B>, 
         Self: HKT<Applied<A> = CFn<R, A>>,
         Self: HKT<Applied<B> = CFn<R, B>>,
     {
@@ -205,10 +202,8 @@ pub mod hkt {
     where
         R: 'static + Clone,
         A: 'static,
-        // Self: Monad<B> + Functor<A, Self::Applied<B>>, // Removed
-        // Self::Applied<B>: 'static,                   // Removed
-        // Original specific requirements
-        Self: Apply<A,B>, // This is now the supertrait of Bind
+        // Bind trait now only requires Apply<A,B> as a supertrait.
+        Self: Apply<A,B>, 
         Self: HKT<Applied<A> = CFnOnce<R, A>>,
         Self: HKT<Applied<B> = CFnOnce<R, B>>,
     {
@@ -293,8 +288,8 @@ pub mod hkt {
     ///
     /// # Example
     /// ```
-    /// use fp_rs::monad::hkt::bind; // The helper function
-    /// use fp_rs::kind_based::kind::OptionHKTMarker;
+    /// use monadify::monad::hkt::bind; // The helper function
+    /// use monadify::kind_based::kind::OptionHKTMarker;
     ///
     /// let opt_val: Option<i32> = Some(5);
     /// let half = |x: i32| if x % 2 == 0 { Some((x as f64) / 2.0) } else { None };
@@ -315,17 +310,6 @@ pub mod hkt {
     {
         F::bind(ma, func)
     }
-
-    // pub fn join<F, A>(mma: F::Applied<F::Applied<A>>) -> F::Applied<A>
-    // where
-    //     F: HKT1 + Monad<A> + Bind<F::Applied<A>, A>, // F must be able to bind F<A> to A. Here A is the B in Bind<_,B>
-    //     A: 'static, // This A is the result type of the inner F::Applied<A>
-    //     F::Applied<A>: 'static, // The inner M<A> must be 'static for the closure
-    // {
-    //     // The function for bind is `id: F::Applied<A> -> F::Applied<A>`
-    //     // F::bind(mma, |ma: F::Applied<A>| ma)
-    //     F::join(mma) // Call the trait method
-    // }
 }
 
 // Directly export HKT Bind, Monad, and helper bind

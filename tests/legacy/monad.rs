@@ -1,24 +1,24 @@
 #![cfg(all(test, feature = "legacy"))] // Ensure these run only when 'legacy' is active
 
 // These imports will need to point to legacy versions.
-// use fp_rs::legacy_monad::{Bind, Monad, join, bind as legacy_bind_fn}; // Assuming join and bind (fn) are part of legacy::monad
-// use fp_rs::legacy_applicative::Applicative;
-// use fp_rs::legacy_function::CFn; // CFn is not part of legacy/hkt split
+// use monadify::legacy_monad::{Bind, Monad, join, bind as legacy_bind_fn}; // Assuming join and bind (fn) are part of legacy::monad
+// use monadify::legacy_applicative::Applicative;
+// use monadify::legacy_function::CFn; // CFn is not part of legacy/hkt split
 
 // For now, using fully qualified paths or direct use from crate::legacy modules.
 
 #[cfg(test)]
 mod classic_monad_tests {
-    use fp_rs::legacy::monad::Bind; // Import Bind trait for method calls
-    // Assuming join and bind (fn) are available via fp_rs::legacy::monad
-    // And Applicative via fp_rs::legacy::applicative::Applicative
+    use monadify::legacy::monad::Bind; // Import Bind trait for method calls
+    // Assuming join and bind (fn) are available via monadify::legacy::monad
+    // And Applicative via monadify::legacy::applicative::Applicative
 
     #[test]
     fn bind_option() {
         let add_one = |x: i32| Some(x + 1);
         let add_two = |x: i32| Some(x + 2);
         let add_three = |x: i32| Some(x + 3);
-        let result = <Option<i32> as fp_rs::legacy::monad::Bind<i32>>::bind(Some(1), add_one)
+        let result = <Option<i32> as monadify::legacy::monad::Bind<i32>>::bind(Some(1), add_one)
             .bind(add_two)
             .bind(add_three);
         assert_eq!(result, Some(7))
@@ -31,13 +31,13 @@ mod classic_monad_tests {
         let add_three = |x: i32| Some(x + 3); 
 
         let composed_closure = move |x| add_one(x).and_then(add_two).and_then(add_three);
-        let result = <Option<i32> as fp_rs::legacy::monad::Bind<i32>>::bind(Some(1), composed_closure);
+        let result = <Option<i32> as monadify::legacy::monad::Bind<i32>>::bind(Some(1), composed_closure);
         assert_eq!(result, Some(7));
 
-        let result_join = fp_rs::legacy::monad::join(Some(Some(1)));
+        let result_join = monadify::legacy::monad::join(Some(Some(1)));
         assert_eq!(result_join, Some(1));
 
-        let result_join_none = fp_rs::legacy::monad::join(Some(None::<i32>));
+        let result_join_none = monadify::legacy::monad::join(Some(None::<i32>));
         assert_eq!(result_join_none, None);
     }
 
@@ -46,7 +46,7 @@ mod classic_monad_tests {
         let add_one = |x: i32| Some(x + 1);
         let add_two = |x: i32| Some(x + 2);
         let add_three = |x: i32| Some(x + 3);
-        let result = <Option<i32> as fp_rs::legacy::monad::Bind<i32>>::bind(Some(1), add_one)
+        let result = <Option<i32> as monadify::legacy::monad::Bind<i32>>::bind(Some(1), add_one)
             .bind(add_two)
             .bind(add_three);
         assert_eq!(result, Some(7))
@@ -55,8 +55,8 @@ mod classic_monad_tests {
 
 #[cfg(test)]
 mod monad_laws {
-    use fp_rs::legacy::monad::Bind;
-    use fp_rs::legacy::applicative::Applicative;
+    use monadify::legacy::monad::Bind;
+    use monadify::legacy::applicative::Applicative;
 
     #[test]
     fn option_monad_left_identity() {
@@ -178,8 +178,8 @@ mod monad_laws {
 
 #[cfg(test)]
 mod result_monad_laws {
-    use fp_rs::legacy::monad::Bind;
-    use fp_rs::legacy::applicative::Applicative;
+    use monadify::legacy::monad::Bind;
+    use monadify::legacy::applicative::Applicative;
 
     #[test]
     fn result_monad_left_identity_ok() {
@@ -302,8 +302,8 @@ mod result_monad_laws {
 
 #[cfg(test)]
 mod vec_monad_laws {
-    use fp_rs::legacy::applicative::Applicative;
-    use fp_rs::legacy::monad::Bind;
+    use monadify::legacy::applicative::Applicative;
+    use monadify::legacy::monad::Bind;
 
     #[test]
     fn vec_monad_left_identity() {

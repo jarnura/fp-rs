@@ -1,15 +1,15 @@
 [package]
-name = "fp-rs"
+name = "monadify"
 description = "A library for functional programming abstractions in Rust, focusing on Monads, Functors, Applicatives, and related concepts."
 version = "0.1.0"
 authors = ["jarnura"]
 edition = "2021"
 rust-version = "1.66" # Minimum supported Rust version
-license = "Apache-2.0"
+license = "MIT"
 readme = "README.md"
-repository = "https://github.com/jarnura/fp-rs"
-homepage = "https://github.com/jarnura/fp-rs"
-documentation = "https://docs.rs/fp-rs" # Will be live after publishing to crates.io
+repository = "https://github.com/jarnura/monadify"
+homepage = "https://github.com/jarnura/monadify"
+documentation = "https://docs.rs/monadify" # Will be live after publishing to crates.io
 keywords = ["functional", "fp", "monad"]
 categories = ["rust-patterns"] # Removed "no-std" as std is currently used
 

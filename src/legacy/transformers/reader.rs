@@ -7,12 +7,21 @@ use crate::legacy::functor::Functor;
 use crate::legacy::identity::Identity; 
 use crate::legacy::monad::{Bind, Monad};
 
+/// Legacy version of the `ReaderT` monad transformer.
+///
+/// `ReaderT<R, M, A>` wraps a computation that takes an environment `R`
+/// and produces a value of type `A` within an inner monad `M`.
+/// The computation itself is a function `R -> M`.
+/// This version uses associated types for its monadic trait implementations.
 pub struct ReaderT<R, M, A> {
+    /// The core function `R -> M` that defines the `ReaderT` computation.
+    /// `M` here is the concrete inner monad type (e.g., `Option<A>`).
     pub run_reader_t: Rc<dyn Fn(R) -> M + 'static>,
     _phantom_a: PhantomData<A>,
 }
 
 impl<R, M, A> ReaderT<R, M, A> {
+    /// Creates a new `ReaderT` from a function `R -> M`.
     pub fn new<F>(f: F) -> Self
     where
         F: Fn(R) -> M + 'static,
@@ -24,6 +33,8 @@ impl<R, M, A> ReaderT<R, M, A> {
     }
 }
 
+/// Legacy type alias for a simple Reader monad.
+/// `Reader<R, A>` is `ReaderT<R, Identity<A>, A>`, representing `R -> Identity<A>`.
 pub type Reader<R, A> = ReaderT<R, Identity<A>, A>;
 
 impl<R, M, A> Functor<A> for ReaderT<R, M, A>
@@ -116,9 +127,15 @@ where
     <M as Applicative<A>>::Applicative<A>: 'static,
 {}
 
+/// Legacy trait for monads that can access a read-only environment `REnv`.
 pub trait MonadReader<REnv, AVal> where Self: Sized {
+    /// The type of `Self` when its value `AVal` is the environment `REnv`.
+    /// For `ReaderT<REnv, M, AVal>`, this would be `ReaderT<REnv, M, REnv>`.
     type SelfWithEnvAsValue;
+    /// Retrieves the environment `REnv` from the context.
     fn ask() -> Self::SelfWithEnvAsValue where REnv: Clone + 'static, Self::SelfWithEnvAsValue: Sized;
+    /// Executes a computation in a modified environment.
+    /// `map_env_fn` transforms the current environment before running `computation`.
     fn local<FMapEnv>(map_env_fn: FMapEnv, computation: Self) -> Self
     where REnv: 'static, AVal: 'static, FMapEnv: Fn(REnv) -> REnv + 'static;
 }

@@ -5,6 +5,14 @@ use crate::legacy::applicative::Applicative;
 use crate::legacy::monad::{Bind, Monad};
 use crate::function::CFn; // CFn is not part of legacy/hkt split
 
+/// Legacy version of the `Identity` monad.
+///
+/// `Identity<A>` simply wraps a value of type `A`. It is the simplest monad,
+/// demonstrating the monadic structure without adding any computational context
+/// other than the wrapping itself.
+///
+/// Its `map`, `apply`, and `bind` operations essentially unwrap the value,
+/// apply the function, and rewrap the result in `Identity`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Identity<A>(pub A);
 

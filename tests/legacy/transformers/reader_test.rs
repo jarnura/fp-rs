@@ -1,14 +1,14 @@
 #![cfg(all(test, feature = "legacy"))] // Ensure these run only when 'legacy' is active
 
-// Import necessary items from the fp_rs crate, pointing to legacy versions
-use fp_rs::legacy::transformers::reader::{ReaderT, Reader};
-use fp_rs::legacy::identity::Identity;
-use fp_rs::legacy::applicative::Applicative;
-use fp_rs::legacy::monad::Bind; // For laws
-use fp_rs::legacy::functor::Functor; // For map
-use fp_rs::legacy::apply::Apply; // For apply
-use fp_rs::legacy::transformers::reader::MonadReader;
-use fp_rs::function::CFn; // CFn is not part of legacy/hkt split
+// Import necessary items from the monadify crate, pointing to legacy versions
+use monadify::legacy::transformers::reader::{ReaderT, Reader};
+use monadify::legacy::identity::Identity;
+use monadify::legacy::applicative::Applicative;
+use monadify::legacy::monad::Bind; // For laws
+use monadify::legacy::functor::Functor; // For map
+use monadify::legacy::apply::Apply; // For apply
+use monadify::legacy::transformers::reader::MonadReader;
+use monadify::function::CFn; // CFn is not part of legacy/hkt split
 
 #[test]
 fn test_reader_t_new_and_run() {

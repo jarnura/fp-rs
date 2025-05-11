@@ -1,6 +1,6 @@
-# fp-rs: Functional Programming Constructs in Rust
+# monadify: Functional Programming Constructs in Rust
 
-`fp-rs` is a Rust library that provides implementations of common functional programming constructs, with a primary focus on monads and related concepts like Functors, Applicatives, and Profunctors. The goal is to offer a practical exploration of these patterns in idiomatic Rust, serving as both a learning resource and a potentially reusable library component.
+`monadify` is a Rust library that provides implementations of common functional programming constructs, with a primary focus on monads and related concepts like Functors, Applicatives, and Profunctors. The goal is to offer a practical exploration of these patterns in idiomatic Rust, serving as both a learning resource and a potentially reusable library component.
 
 ## Core Concepts Implemented
 
@@ -32,10 +32,10 @@ The library also includes `CFn` and `CFnOnce` wrappers for heap-allocated closur
 
 ## Usage Example
 
-Here's a quick example of using the `Functor` trait with `Option` (assuming the `kind` feature is enabled for HKTs):
+Here's a quick example of using the `Functor` trait with `Option` (HKT is now the default):
 
 ```rust
-use fp_rs::{Functor, OptionHKTMarker}; // Import HKT Functor and marker
+use monadify::{Functor, OptionHKTMarker}; // Import HKT Functor and marker
 
 let some_value: Option<i32> = Some(10);
 // For HKT, Functor<A,B> is on the marker OptionHKTMarker
@@ -47,10 +47,10 @@ let mapped_none = OptionHKTMarker::map(no_value, |x: i32| x * 2);
 assert_eq!(mapped_none, None);
 ```
 
-And an example using `Bind` (often called `flat_map`), assuming the `kind` feature:
+And an example using `Bind` (often called `flat_map`):
 
 ```rust
-use fp_rs::{Bind, OptionHKTMarker}; // Import HKT Bind and marker
+use monadify::{Bind, OptionHKTMarker}; // Import HKT Bind and marker
 
 fn try_parse_and_double(s: &str) -> Option<i32> {
     s.parse::<i32>().ok().map(|n| n * 2)
@@ -85,11 +85,18 @@ cargo build
 
 ## Running Tests
 
-The library includes a comprehensive test suite to verify the laws of `Functor`, `Applicative`, `Monad`, etc. To run the tests:
+The library includes a comprehensive test suite to verify the laws of `Functor`, `Applicative`, `Monad`, etc.
+To run the default HKT tests:
 ```bash
 cargo test
 ```
-Currently, there are 83 unit tests and 3 documentation tests, all passing.
+This suite includes over 140 tests covering HKT implementations (for `Option`, `Result`, `Vec`, `Identity`, `CFn`, `ReaderT`) and `Profunctor` laws, all passing.
+
+To run tests for the legacy (non-HKT) implementations, use the `legacy` feature flag:
+```bash
+cargo test --features legacy
+```
+This suite includes over 80 tests for the legacy versions, also all passing.
 
 ## Running Benchmarks
 

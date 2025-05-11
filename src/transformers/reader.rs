@@ -23,12 +23,12 @@ pub mod hkt {
     //!
     //! ## Example
     //! ```
-    //! use fp_rs::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader, Reader};
-    //! use fp_rs::kind_based::kind::OptionHKTMarker; // OptionHKTMarker from kind_based::kind
-    //! use fp_rs::IdentityHKTMarker; // IdentityHKTMarker re-exported from crate::identity
-    //! use fp_rs::functor::hkt::Functor;
-    //! use fp_rs::applicative::hkt::Applicative;
-    //! use fp_rs::monad::hkt::{Bind, Monad};
+    //! use monadify::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader, Reader};
+    //! use monadify::kind_based::kind::OptionHKTMarker; // OptionHKTMarker from kind_based::kind
+    //! use monadify::IdentityHKTMarker; // IdentityHKTMarker re-exported from crate::identity
+    //! use monadify::functor::hkt::Functor;
+    //! use monadify::applicative::hkt::Applicative;
+    //! use monadify::monad::hkt::{Bind, Monad};
     //! use std::rc::Rc;
     //!
     //! // Define a configuration environment
@@ -85,7 +85,7 @@ pub mod hkt {
     //! // 5. Using 'join' (example with Reader<R, Reader<R, A>>)
     //! type SimpleReader<A> = Reader<Config, A>; // ReaderT<Config, IdentityHKTMarker, A>
     //! type SimpleReaderMarker = ReaderTHKTMarker<Config, IdentityHKTMarker>;
-    //! use fp_rs::HKT; // For HKT::Applied
+    //! use monadify::HKT; // For HKT::Applied
     //!
     //! let val_in_id: <IdentityHKTMarker as HKT>::Applied<SimpleReader<String>> =
     //!     IdentityHKTMarker::pure(ReaderT::new(|cfg: Config| IdentityHKTMarker::pure(cfg.greeting)));
@@ -310,8 +310,8 @@ pub mod hkt {
         ///
         /// # Example
         /// ```
-        /// use fp_rs::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader};
-        /// use fp_rs::kind_based::kind::OptionHKTMarker;
+        /// use monadify::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader};
+        /// use monadify::kind_based::kind::OptionHKTMarker;
         ///
         /// #[derive(Clone, PartialEq, Debug)]
         /// struct MyConfig { id: i32 }
@@ -337,10 +337,10 @@ pub mod hkt {
         ///
         /// # Example
         /// ```
-        /// use fp_rs::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader};
-        /// use fp_rs::kind_based::kind::OptionHKTMarker;
-        /// use fp_rs::applicative::hkt::Applicative; // For pure
-        /// use fp_rs::functor::hkt::Functor; // For map
+        /// use monadify::transformers::reader::hkt::{ReaderT, ReaderTHKTMarker, MonadReader};
+        /// use monadify::kind_based::kind::OptionHKTMarker;
+        /// use monadify::applicative::hkt::Applicative; // For pure
+        /// use monadify::functor::hkt::Functor; // For map
         ///
         /// #[derive(Clone, PartialEq, Debug)]
         /// struct MyConfig { prefix: String, value: i32 }

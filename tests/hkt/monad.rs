@@ -1,8 +1,8 @@
-use fp_rs::monad::hkt::{Bind, Monad};
-use fp_rs::applicative::hkt::Applicative;
-use fp_rs::functor::hkt::Functor; // Import HKT Functor
-use fp_rs::kind_based::kind::{ResultHKTMarker, OptionHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker}; // Added CFnOnceHKTMarker
-use fp_rs::function::{CFn, CFnOnce};
+use monadify::monad::hkt::{Bind, Monad};
+use monadify::applicative::hkt::Applicative;
+use monadify::functor::hkt::Functor; // Import HKT Functor
+use monadify::kind_based::kind::{ResultHKTMarker, OptionHKTMarker, VecHKTMarker, CFnHKTMarker, CFnOnceHKTMarker}; // Added CFnOnceHKTMarker
+use monadify::function::{CFn, CFnOnce};
 
 
 // Common error type for Result tests

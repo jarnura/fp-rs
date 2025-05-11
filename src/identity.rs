@@ -18,10 +18,10 @@ pub mod hkt {
     //!
     //! ## Example
     //! ```
-    //! use fp_rs::identity::hkt::{Identity, IdentityHKTMarker};
-    //! use fp_rs::functor::hkt::Functor;
-    //! use fp_rs::applicative::hkt::Applicative;
-    //! use fp_rs::monad::hkt::{Bind, Monad};
+    //! use monadify::identity::hkt::{Identity, IdentityHKTMarker};
+    //! use monadify::functor::hkt::Functor;
+    //! use monadify::applicative::hkt::Applicative;
+    //! use monadify::monad::hkt::{Bind, Monad};
     //!
     //! // Pure (from Applicative)
     //! let id_val: Identity<i32> = IdentityHKTMarker::pure(10);

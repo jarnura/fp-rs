@@ -2,10 +2,10 @@
 // with use statements adjusted for the new location.
 
 // Items re-exported from lib.rs
-use fp_rs::Profunctor; // These are re-exported
+use monadify::Profunctor; // These are re-exported
 
 // Items specific to the profunctor module
-use fp_rs::profunctor::{
+use monadify::profunctor::{
     _key,
     lcmap,
     rmap,
@@ -16,7 +16,7 @@ use fp_rs::profunctor::{
 };
 
 // Items from other modules
-use fp_rs::fn1; // Macro is at crate root
+use monadify::fn1; // Macro is at crate root
 
 #[cfg(test)]
 mod tests {
@@ -26,7 +26,7 @@ mod tests {
     #[test]
     fn test_fn_dimap() {
         let closure = fn1!(|x: i32| format!("{x}"));
-        // Assuming Profunctor is in scope via `use fp_rs::Profunctor;` at the top of this test file
+        // Assuming Profunctor is in scope via `use monadify::Profunctor;` at the top of this test file
         // or `use super::Profunctor;` if it were defined in this file's parent.
         // Since Profunctor is a trait, `closure.dimap` should work if `closure` (a CFn) implements Profunctor.
         let proclosure = closure.dimap(|x: i8| (x + 1).into(), |s| vec![s]);
@@ -83,8 +83,8 @@ mod tests {
 
 #[cfg(test)]
 mod profunctor_laws {
-    use fp_rs::function::CFn;
-    use fp_rs::Profunctor;
+    use monadify::function::CFn;
+    use monadify::Profunctor;
 
     // Helper identity function
     fn identity<T>(x: T) -> T {
@@ -173,8 +173,8 @@ mod profunctor_laws {
 
 #[cfg(test)]
 mod strong_laws {
-    use fp_rs::function::CFn;
-    use fp_rs::{Profunctor, Strong};
+    use monadify::function::CFn;
+    use monadify::{Profunctor, Strong};
 
     // Helper identity function
     fn identity<T>(x: T) -> T {
@@ -312,8 +312,8 @@ mod strong_laws {
 
 #[cfg(test)]
 mod choice_laws {
-    use fp_rs::function::CFn;
-    use fp_rs::{Choice, Profunctor};
+    use monadify::function::CFn;
+    use monadify::{Choice, Profunctor};
 
     // Helper identity function (Removed as unused in this module)
     // fn identity<T>(x: T) -> T {

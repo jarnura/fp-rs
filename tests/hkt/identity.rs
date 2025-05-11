@@ -1,10 +1,10 @@
 // Original imports from src/identity.rs hkt_tests module, adjusted
-use fp_rs::identity::{Identity, IdentityHKTMarker}; // Assuming these are re-exported
-use fp_rs::functor::hkt::Functor;
-use fp_rs::apply::hkt::Apply;
-use fp_rs::applicative::hkt::Applicative;
-use fp_rs::monad::hkt::{Bind, Monad};
-use fp_rs::function::CFn;
+use monadify::identity::{Identity, IdentityHKTMarker}; // Assuming these are re-exported
+use monadify::functor::hkt::Functor;
+use monadify::apply::hkt::Apply;
+use monadify::applicative::hkt::Applicative;
+use monadify::monad::hkt::{Bind, Monad};
+use monadify::function::CFn;
 
 // The hkt_tests module content
 #[test]

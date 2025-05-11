@@ -1,5 +1,5 @@
 // Imports needed for the tests, adjusted from src/kind_based/kind.rs context
-use fp_rs::kind_based::kind::*; // Imports HKT, OptionHKTMarker, ResultHKTMarker, etc.
+use monadify::kind_based::kind::*; // Imports HKT, OptionHKTMarker, ResultHKTMarker, etc.
 
 // The example module content
 // Copied from src/kind_based/kind.rs

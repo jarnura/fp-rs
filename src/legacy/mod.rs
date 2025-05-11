@@ -11,17 +11,23 @@
 //! ```toml
 //! # Cargo.toml
 //! # [dependencies]
-//! # fp-rs = { version = "0.1.0", features = ["legacy"] }
+//! # monadify = { version = "0.1.0", features = ["legacy"] }
 //! ```
 //!
 //! Then, you can access them via their respective paths, e.g.:
-//! `use fp_rs::legacy::functor::Functor as LegacyFunctor;`
+//! `use monadify::legacy::functor::Functor as LegacyFunctor;`
 
+/// Legacy `Applicative` trait and implementations.
 pub mod applicative;
+/// Legacy `Apply` trait and implementations.
 pub mod apply;
+/// Legacy `Functor` trait and implementations.
 pub mod functor;
+/// Legacy `Identity` monad implementation.
 pub mod identity;
+/// Legacy `Monad` and `Bind` traits and implementations.
 pub mod monad;
+/// Legacy monad transformers, e.g., `ReaderT`.
 pub mod transformers; // This will contain the legacy reader module
 
 // Optional: Re-export legacy traits/structs with a `Legacy` prefix
@@ -36,4 +42,4 @@ pub mod transformers; // This will contain the legacy reader module
 // pub use transformers::reader::Reader as LegacyReader;
 // pub use transformers::reader::MonadReader as LegacyMonadReader;
 
-// For now, users will access them via full path like `fp_rs::legacy::functor::Functor`.
+// For now, users will access them via full path like `monadify::legacy::functor::Functor`.
